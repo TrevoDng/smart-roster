@@ -1,0 +1,260 @@
+.App {
+  text-align: center;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* print section */
+/* App.css - Add these print styles */
+
+/* Print styles for the entire app */
+@media print {
+  /* Hide everything except the print container */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Hide navigation */
+  nav {
+    display: none !important;
+  }
+  
+  /* Hide all buttons */
+  button {
+    display: none !important;
+  }
+  
+  /* Hide modals */
+  .modal,
+  .modal-overlay {
+    display: none !important;
+  }
+  
+  /* Hide version selector */
+  .version-selector {
+    display: none !important;
+  }
+
+  /* Print container - visible */
+  .print-container {
+    display: flex !important;
+    visibility: visible !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px !important;
+    padding: 15px !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    transform: rotate(90deg) !important;
+    transform-origin: center center !important;
+  }
+  
+  .print-container * {
+    visibility: visible !important;
+  }
+
+  /* Page size for ANSI-C */
+  @page {
+    size: ANSI-C landscape;
+    margin: 0.2in;
+  }
+
+  /* Header - Right side (Order 3) */
+  .print-header {
+    flex: 0 0 180px !important;
+    order: 3 !important;
+    padding: 12px !important;
+    text-align: center !important;
+    border: 1px solid #ccc !important;
+    border-radius: 8px !important;
+    background: #f8f9fa !important;
+    height: fit-content !important;
+    max-height: 90vh !important;
+    overflow: hidden !important;
+  }
+
+  /* Table - Middle (Order 2) */
+  .print-table-container {
+    flex: 1 !important;
+    order: 2 !important;
+    overflow: visible !important;
+    padding: 8px !important;
+    max-width: 65% !important;
+  }
+
+  /* Summary - Left side (Order 1) */
+  .print-summary {
+    flex: 0 0 160px !important;
+    order: 1 !important;
+    padding: 12px !important;
+    border: 1px solid #ccc !important;
+    border-radius: 8px !important;
+    background: #f8f9fa !important;
+    font-size: 11px !important;
+    height: fit-content !important;
+    max-height: 90vh !important;
+    overflow: hidden !important;
+  }
+
+  /* Table styles for printing */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    font-size: 9px !important;
+    page-break-inside: avoid !important;
+  }
+
+  th, td {
+    border: 1px solid #000 !important;
+    padding: 3px 5px !important;
+    text-align: center !important;
+  }
+
+  th {
+    background-color: #1e3a5f !important;
+    color: white !important;
+    font-weight: bold !important;
+    font-size: 8px !important;
+  }
+
+  td {
+    font-size: 8px !important;
+  }
+
+  .staff-name {
+    background-color: #e0e0e0 !important;
+    font-weight: bold !important;
+    text-align: left !important;
+    min-width: 60px !important;
+    font-size: 8px !important;
+  }
+
+  /* Shift colors */
+  .shift-day { background-color: #4CAF50 !important; color: white !important; }
+  .shift-night { background-color: #2196F3 !important; color: white !important; }
+  .shift-off { background-color: #9E9E9E !important; color: white !important; }
+  .shift-overtime { background-color: #8B4513 !important; color: white !important; }
+
+  /* Print header styles */
+  .print-header h2 {
+    margin: 0 !important;
+    font-size: 13px !important;
+    color: #1e3a5f !important;
+  }
+
+  .print-header p {
+    margin: 2px 0 !important;
+    font-size: 9px !important;
+    color: #555 !important;
+  }
+
+  .print-header hr {
+    margin: 6px 0 !important;
+  }
+
+  .print-version {
+    font-size: 8px !important;
+    color: #999 !important;
+    margin-top: 3px !important;
+  }
+
+  /* Print summary styles */
+  .print-summary h3 {
+    margin: 0 0 8px 0 !important;
+    font-size: 12px !important;
+    border-bottom: 2px solid #1e3a5f !important;
+    padding-bottom: 5px !important;
+    color: #1e3a5f !important;
+    text-align: center !important;
+  }
+
+  .print-summary p {
+    margin: 3px 0 !important;
+    font-weight: bold !important;
+    font-size: 10px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    padding: 2px 0 !important;
+    border-bottom: 1px dashed #eee !important;
+  }
+
+  .print-summary p:last-of-type {
+    border-bottom: none !important;
+  }
+
+  .print-total {
+    margin-top: 8px !important;
+    padding-top: 8px !important;
+    border-top: 2px solid #1e3a5f !important;
+    text-align: center !important;
+    font-weight: bold !important;
+    font-size: 11px !important;
+    color: #1e3a5f !important;
+  }
+
+  /* Company number */
+  .company-number {
+    font-size: 7px !important;
+    color: #666 !important;
+  }
+
+  /* Force table headers to repeat on each page */
+  thead {
+    display: table-header-group !important;
+  }
+
+  /* Prevent page breaks inside rows */
+  tr {
+    page-break-inside: avoid !important;
+  }
+
+  /* Avoid page breaks in the middle of the container */
+  .print-container {
+    page-break-after: avoid !important;
+  }
+
+  /* Ensure the table fits */
+  .print-table-container table {
+    min-width: 300px !important;
+  }
+
+  /* Scroll if needed */
+  .print-table-container {
+    overflow: auto !important;
+    max-height: 95vh !important;
+  }
+}
