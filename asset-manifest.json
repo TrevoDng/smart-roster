@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/smart-roster/static/css/main.96ac91f8.css",
+    "main.js": "/smart-roster/static/js/main.4eb2f9a6.js",
+    "static/js/453.94133ed0.chunk.js": "/smart-roster/static/js/453.94133ed0.chunk.js",
+    "index.html": "/smart-roster/index.html",
+    "main.96ac91f8.css.map": "/smart-roster/static/css/main.96ac91f8.css.map",
+    "main.4eb2f9a6.js.map": "/smart-roster/static/js/main.4eb2f9a6.js.map",
+    "453.94133ed0.chunk.js.map": "/smart-roster/static/js/453.94133ed0.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.96ac91f8.css",
+    "static/js/main.4eb2f9a6.js"
+  ]
+}
