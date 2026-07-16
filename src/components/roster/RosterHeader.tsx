@@ -9,6 +9,7 @@ interface RosterHeaderProps {
   pendingCount: number;
   isLatestVersion: boolean;
   onEditClick: (type: 'overtime' | 'extra_off' | 'shift_change') => void;
+  handleSubmitAllChanges: () => void;
   onDeleteRoster: () => void;
   onDownload: () => void;
   onPrint: () => void;
@@ -26,6 +27,7 @@ const RosterHeader: React.FC<RosterHeaderProps> = ({
   pendingCount,
   isLatestVersion,
   onEditClick,
+  handleSubmitAllChanges,
   onDeleteRoster,
   onDownload,
   onPrint,
@@ -88,9 +90,11 @@ const RosterHeader: React.FC<RosterHeaderProps> = ({
             >
               Shift Change
             </button>
+            {/*() => {}*/}
+
             {hasPendingChanges && (
               <button 
-                onClick={() => {}} // This will be handled by parent
+                onClick={handleSubmitAllChanges } // This will be handled by parent
                 style={{ ...editButtonStyle, backgroundColor: '#28a745' }}
               >
                 📋 Submit All ({pendingCount})

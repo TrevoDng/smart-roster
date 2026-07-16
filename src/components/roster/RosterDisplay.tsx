@@ -244,6 +244,7 @@ const RosterDisplay: React.FC = () => {
       alert('No pending changes to submit');
       return;
     }
+    
 
     setIsSubmitting(true);
 
@@ -806,6 +807,7 @@ const handleDownload = useCallback(() => {
           <RosterHeader
             roster={roster}
             selectedVersion={selectedVersion}
+            handleSubmitAllChanges={handleSubmitAllChanges}
             totalVersions={snapshots.length}
             hasPendingChanges={hasPendingChanges}
             pendingCount={pendingChanges.length}
