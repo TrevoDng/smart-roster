@@ -1,15 +1,15 @@
 {
   "files": {
-    "main.css": "/smart-roster/static/css/main.96ac91f8.css",
-    "main.js": "/smart-roster/static/js/main.91a0ee9b.js",
-    "static/js/453.94133ed0.chunk.js": "/smart-roster/static/js/453.94133ed0.chunk.js",
-    "index.html": "/smart-roster/index.html",
-    "main.96ac91f8.css.map": "/smart-roster/static/css/main.96ac91f8.css.map",
-    "main.91a0ee9b.js.map": "/smart-roster/static/js/main.91a0ee9b.js.map",
-    "453.94133ed0.chunk.js.map": "/smart-roster/static/js/453.94133ed0.chunk.js.map"
+    "main.css": "smart-roster/static/css/main.96ac91f8.css",
+    "main.js": "smart-roster/static/js/main.1a52a27a.js",
+    "static/js/453.94133ed0.chunk.js": "smart-roster/static/js/453.94133ed0.chunk.js",
+    "index.html": "smart-roster/index.html",
+    "main.96ac91f8.css.map": "smart-roster/static/css/main.96ac91f8.css.map",
+    "main.1a52a27a.js.map": "smart-roster/static/js/main.1a52a27a.js.map",
+    "453.94133ed0.chunk.js.map": "smart-roster/static/js/453.94133ed0.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.96ac91f8.css",
-    "static/js/main.91a0ee9b.js"
+    "static/js/main.1a52a27a.js"
   ]
 }
