@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { Roster, RosterSnapshot } from '../../types';
 import RosterTable from './RosterTable';
 import RosterSummary from './RosterSummary';
@@ -23,21 +24,29 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
   onDownload,
 }) => {
   const [isRotated, setIsRotated] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const currentData = (snapshot.data as any).generatedData;
+
+  // Check if screen is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const toggleRotation = () => {
     setIsRotated(!isRotated);
   };
 
-  // Handle download button click
   const handleDownloadClick = () => {
     onDownload();
-    // Close after download
     setTimeout(() => onClose(), 1500);
   };
 
-  // Check if table is wide (more than 15 columns)
   const isTableWide = currentData.headers.length > 15;
 
   return (
@@ -47,40 +56,36 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
         <div style={headerStyle}>
           <h2 style={titleStyle}>📄 Download Preview</h2>
           <div style={headerControlsStyle}>
-            {isTableWide && (
-              <button 
-                onClick={toggleRotation} 
-                style={rotateButtonStyle}
-              >
-                {isRotated ? '↺ Reset View' : '↻ Rotate 90°'}
+            {isTableWide && !isMobile && (
+              <button onClick={toggleRotation} style={rotateButtonStyle}>
+                {isRotated ? '↺ Reset' : '↻ Rotate'}
               </button>
             )}
             <button onClick={onClose} style={closeButtonStyle}>
-              ✕ Close
+              ✕
             </button>
           </div>
         </div>
 
-        {/* Preview Info */}
+        {/* Preview Info - Responsive */}
         <div style={infoBarStyle}>
-          <span>📋 {roster.name}</span>
-          <span>📅 {formatDate(roster.startDate)} - {formatDate(roster.endDate)}</span>
-          <span>👥 {roster.employees.length} employees</span>
-          <span>📊 {currentData.headers.length} days</span>
+          <div style={infoGridStyle}>
+            <span style={infoItemStyle}>📋 {roster.name}</span>
+            <span style={infoItemStyle}>📅 {formatDate(roster.startDate)}</span>
+            <span style={infoItemStyle}>👥 {roster.employees.length}</span>
+            <span style={infoItemStyle}>📊 {currentData.headers.length} days</span>
+          </div>
           {isTableWide && (
-            <span style={warningBadgeStyle}>
-              ⚠️ Table is wide ({currentData.headers.length} columns) - Consider rotating
-            </span>
+            <div style={warningBadgeStyle}>
+              ⚠️ {currentData.headers.length} columns
+              {isMobile && ' - Scroll horizontally'}
+            </div>
           )}
-          <span style={{ color: '#999', fontSize: '12px' }}>
-            {isRotated ? '🔄 Rotated View' : '⬛ Normal View'}
-          </span>
         </div>
 
         {/* Preview Content */}
         <div 
           ref={previewRef}
-          className={`preview-content ${isRotated ? 'rotated' : ''}`}
           style={{
             ...contentStyle,
             transform: isRotated ? 'rotate(90deg)' : 'none',
@@ -89,7 +94,7 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
           }}
         >
           <div style={innerContentStyle}>
-            {/* Header - Top */}
+            {/* Header */}
             <div style={previewHeaderStyle}>
               <h3 style={previewTitleStyle}>{roster.name}</h3>
               <p style={previewSubStyle}>
@@ -105,16 +110,18 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
               <RosterSummary summary={currentData.summary} isPrintView={true} />
             </div>
 
-            {/* Table */}
-            <div style={previewTableStyle}>
-              <RosterTable
-                roster={roster}
-                headers={currentData.headers}
-                rows={currentData.rows}
-                getShiftColor={getShiftColor}
-                getShiftDisplay={getShiftDisplay}
-                isPrintView={true}
-              />
+            {/* Table with horizontal scroll for mobile */}
+            <div style={previewTableWrapperStyle}>
+              <div style={previewTableStyle}>
+                <RosterTable
+                  roster={roster}
+                  headers={currentData.headers}
+                  rows={currentData.rows}
+                  getShiftColor={getShiftColor}
+                  getShiftDisplay={getShiftDisplay}
+                  isPrintView={true}
+                />
+              </div>
             </div>
 
             {/* Footer */}
@@ -124,23 +131,25 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
           </div>
         </div>
 
-        {/* Controls */}
+        {/* Controls - Responsive */}
         <div style={controlsStyle}>
           <div style={controlsLeftStyle}>
-            {isTableWide && (
+            {isTableWide && !isMobile && (
               <button 
                 onClick={toggleRotation} 
                 style={{ ...controlButtonStyle, backgroundColor: '#17a2b8' }}
               >
-                {isRotated ? '↺ Reset View' : '↻ Rotate 90°'}
+                {isRotated ? '↺ Reset' : '↻ Rotate'}
               </button>
             )}
             <span style={hintStyle}>
-              {isRotated 
-                ? '💡 Rotated view - scroll to see all content' 
-                : isTableWide 
-                  ? '💡 Click "Rotate 90°" to see all columns' 
-                  : '✅ Table fits well'}
+              {isMobile 
+                ? '👆 Scroll table horizontally' 
+                : isRotated 
+                  ? '🔄 Rotated view' 
+                  : isTableWide 
+                    ? '💡 Click Rotate for full view' 
+                    : '✅ Ready to download'}
             </span>
           </div>
           <div style={controlsRightStyle}>
@@ -148,23 +157,25 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
               Cancel
             </button>
             <button onClick={handleDownloadClick} style={{ ...controlButtonStyle, backgroundColor: '#28a745' }}>
-              ⬇️ Download Roster
+              ⬇️ Download
             </button>
           </div>
         </div>
       </div>
 
-      {/* Print Styles for Download Preview */}
       <style>
         {`
           @media print {
             .preview-content {
               transform: none !important;
+            }
+          }
+          @media (max-width: 768px) {
+            .preview-content {
               padding: 10px !important;
             }
             .preview-content.rotated {
               transform: rotate(90deg) !important;
-              transform-origin: center center !important;
             }
           }
         `}
@@ -173,7 +184,10 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
   );
 };
 
-// Styles
+// ============================================
+// RESPONSIVE STYLES
+// ============================================
+
 const overlayStyle: React.CSSProperties = {
   position: 'fixed',
   top: 0,
@@ -185,144 +199,173 @@ const overlayStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  padding: '20px',
+  padding: '10px',
 };
 
 const containerStyle: React.CSSProperties = {
   backgroundColor: 'white',
   borderRadius: '12px',
-  width: '95%',
+  width: '100%',
   maxWidth: '1400px',
-  maxHeight: '95vh',
+  maxHeight: '98vh',
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
 };
 
 const headerStyle: React.CSSProperties = {
-  padding: '15px 20px',
+  padding: '12px 16px',
   borderBottom: '1px solid #ddd',
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   backgroundColor: '#f8f9fa',
   flexShrink: 0,
+  flexWrap: 'wrap',
+  gap: '8px',
 };
 
 const titleStyle: React.CSSProperties = {
   margin: 0,
   color: '#1e3a5f',
-  fontSize: '20px',
+  fontSize: 'clamp(16px, 3vw, 20px)',
 };
 
 const headerControlsStyle: React.CSSProperties = {
   display: 'flex',
-  gap: '10px',
+  gap: '8px',
 };
 
 const rotateButtonStyle: React.CSSProperties = {
-  padding: '8px 16px',
+  padding: '6px 12px',
   backgroundColor: '#17a2b8',
   color: 'white',
   border: 'none',
   borderRadius: '6px',
   cursor: 'pointer',
-  fontSize: '14px',
+  fontSize: 'clamp(12px, 1.5vw, 14px)',
   fontWeight: 'bold',
+  whiteSpace: 'nowrap',
 };
 
 const closeButtonStyle: React.CSSProperties = {
-  padding: '8px 16px',
+  padding: '6px 12px',
   backgroundColor: '#dc3545',
   color: 'white',
   border: 'none',
   borderRadius: '6px',
   cursor: 'pointer',
-  fontSize: '14px',
+  fontSize: 'clamp(12px, 1.5vw, 14px)',
   fontWeight: 'bold',
+  whiteSpace: 'nowrap',
 };
 
 const infoBarStyle: React.CSSProperties = {
-  padding: '10px 20px',
+  padding: '8px 16px',
   backgroundColor: '#e9ecef',
   display: 'flex',
-  gap: '20px',
   flexWrap: 'wrap',
   alignItems: 'center',
-  fontSize: '13px',
+  justifyContent: 'space-between',
+  fontSize: 'clamp(11px, 1.2vw, 13px)',
   color: '#333',
   flexShrink: 0,
   borderBottom: '1px solid #ddd',
+  gap: '8px',
+};
+
+const infoGridStyle: React.CSSProperties = {
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: '12px',
+  alignItems: 'center',
+};
+
+const infoItemStyle: React.CSSProperties = {
+  whiteSpace: 'nowrap',
 };
 
 const warningBadgeStyle: React.CSSProperties = {
   backgroundColor: '#fff3cd',
   color: '#856404',
-  padding: '2px 12px',
+  padding: '2px 10px',
   borderRadius: '12px',
   fontWeight: 'bold',
+  fontSize: 'clamp(10px, 1vw, 12px)',
+  whiteSpace: 'nowrap',
 };
 
 const contentStyle: React.CSSProperties = {
   flex: 1,
   overflow: 'auto',
-  padding: '20px',
+  padding: 'clamp(10px, 2vw, 20px)',
   backgroundColor: '#f5f5f5',
-  minHeight: '300px',
+  minHeight: '200px',
+  WebkitOverflowScrolling: 'touch',
 };
 
 const innerContentStyle: React.CSSProperties = {
   backgroundColor: 'white',
-  padding: '30px',
+  padding: 'clamp(15px, 3vw, 30px)',
   borderRadius: '8px',
   boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
   maxWidth: '1200px',
   margin: '0 auto',
+  width: '100%',
 };
 
 const previewHeaderStyle: React.CSSProperties = {
   textAlign: 'center',
-  padding: '15px',
-  marginBottom: '20px',
+  padding: 'clamp(10px, 2vw, 15px)',
+  marginBottom: 'clamp(10px, 2vw, 20px)',
   borderBottom: '2px solid #1e3a5f',
 };
 
 const previewTitleStyle: React.CSSProperties = {
-  margin: '0 0 8px 0',
+  margin: '0 0 6px 0',
   color: '#1e3a5f',
-  fontSize: '22px',
+  fontSize: 'clamp(18px, 3vw, 22px)',
+  wordBreak: 'break-word',
 };
 
 const previewSubStyle: React.CSSProperties = {
   margin: '4px 0',
   color: '#555',
-  fontSize: '14px',
+  fontSize: 'clamp(12px, 1.5vw, 14px)',
 };
 
 const previewMetaStyle: React.CSSProperties = {
   margin: '4px 0',
   color: '#999',
-  fontSize: '12px',
+  fontSize: 'clamp(10px, 1.2vw, 12px)',
 };
 
 const previewSummaryStyle: React.CSSProperties = {
-  marginBottom: '20px',
+  marginBottom: 'clamp(10px, 2vw, 20px)',
+};
+
+const previewTableWrapperStyle: React.CSSProperties = {
+  overflowX: 'auto',
+  WebkitOverflowScrolling: 'touch',
+  marginBottom: 'clamp(10px, 2vw, 20px)',
+  borderRadius: '4px',
 };
 
 const previewTableStyle: React.CSSProperties = {
-  marginBottom: '20px',
+  minWidth: '100%',
+  width: '100%',
 };
 
 const previewFooterStyle: React.CSSProperties = {
   textAlign: 'center',
-  padding: '15px',
+  padding: 'clamp(10px, 2vw, 15px)',
   borderTop: '1px solid #ddd',
-  fontSize: '12px',
+  fontSize: 'clamp(10px, 1.2vw, 12px)',
   color: '#999',
 };
 
 const controlsStyle: React.CSSProperties = {
-  padding: '15px 20px',
+  padding: 'clamp(10px, 2vw, 15px)',
   borderTop: '1px solid #ddd',
   display: 'flex',
   justifyContent: 'space-between',
@@ -330,35 +373,39 @@ const controlsStyle: React.CSSProperties = {
   backgroundColor: '#f8f9fa',
   flexShrink: 0,
   flexWrap: 'wrap',
-  gap: '10px',
+  gap: '8px',
 };
 
 const controlsLeftStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '15px',
+  gap: 'clamp(8px, 1.5vw, 15px)',
   flexWrap: 'wrap',
 };
 
 const controlsRightStyle: React.CSSProperties = {
   display: 'flex',
-  gap: '10px',
+  gap: '8px',
+  flexWrap: 'wrap',
 };
 
 const controlButtonStyle: React.CSSProperties = {
-  padding: '10px 25px',
+  padding: 'clamp(8px, 1.5vw, 12px) clamp(16px, 2.5vw, 25px)',
   color: 'white',
   border: 'none',
   borderRadius: '6px',
   cursor: 'pointer',
-  fontSize: '14px',
+  fontSize: 'clamp(12px, 1.5vw, 14px)',
   fontWeight: 'bold',
   transition: 'transform 0.2s',
+  whiteSpace: 'nowrap',
+  minWidth: 'clamp(70px, 10vw, 100px)',
 };
 
 const hintStyle: React.CSSProperties = {
-  fontSize: '13px',
+  fontSize: 'clamp(11px, 1.2vw, 13px)',
   color: '#666',
+  textAlign: 'left',
 };
 
 export default DownloadPreview;
