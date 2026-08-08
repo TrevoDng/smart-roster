@@ -13,7 +13,7 @@ import './App.css';
 
 function App() {
   return (
-    <Router basename={"smart-roster"}>
+    <Router basename="/smart-roster">
       <AuthProvider>
         <div className="App">
           <Routes>
