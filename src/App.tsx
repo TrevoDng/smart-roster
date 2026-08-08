@@ -13,7 +13,7 @@ import './App.css';
 
 function App() {
   return (
-    <Router basename={process.env.PUBLIC_URL}>
+    <Router>
       <AuthProvider>
         <div className="App">
           <Routes>
