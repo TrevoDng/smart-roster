@@ -34,6 +34,13 @@ interface PendingChange {
   employeeName: string;
 }
 
+// Extend Window interface for html2pdf
+declare global {
+  interface Window {
+    html2pdf: any;
+  }
+}
+
 const RosterDisplay: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -477,286 +484,150 @@ const handleCloseDownloadPreview = useCallback(() => {
   setShowDownloadPreview(false);
 }, []);
 
-// Actual download function (called from preview)
-const handleActualDownload = useCallback(() => {
+// ============================================
+// PDF DOWNLOAD FUNCTION - Using html2pdf.js
+// ============================================
+const handleActualDownload = useCallback(async () => {
   if (!roster || !currentSnapshot) return;
   
-  const currentData = getGeneratedData(currentSnapshot);
-  
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${roster.name} - Roster</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: Arial, sans-serif; 
-      background: white; 
-      padding: 40px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+  try {
+    const currentData = getGeneratedData(currentSnapshot);
+    
+    // Check if html2pdf is loaded
+    if (typeof window.html2pdf === 'undefined') {
+      alert('PDF library is loading. Please try again in a moment.');
+      console.error('html2pdf is not loaded. Please check the CDN script.');
+      return;
     }
     
-    .print-container {
-      max-width: 1200px;
-      width: 100%;
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
-    }
+    // Create a temporary container with the roster data
+    const tempDiv = document.createElement('div');
+    tempDiv.style.position = 'fixed';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '0';
+    tempDiv.style.width = '1200px'; // Wide enough to capture all columns
+    tempDiv.style.backgroundColor = 'white';
+    tempDiv.style.padding = '40px';
+    tempDiv.style.zIndex = '-1';
+    tempDiv.style.fontFamily = 'Arial, sans-serif';
     
-    .header {
-      text-align: center;
-      padding: 20px;
-      margin-bottom: 30px;
-      border-bottom: 2px solid #1e3a5f;
-    }
-    
-    .header h1 {
-      color: #1e3a5f;
-      font-size: 28px;
-      margin-bottom: 8px;
-    }
-    
-    .header p {
-      color: #555;
-      font-size: 14px;
-      margin: 4px 0;
-    }
-    
-    .header .meta {
-      margin-top: 10px;
-      font-size: 12px;
-      color: #999;
-    }
-    
-    .summary {
-      padding: 20px;
-      margin-bottom: 30px;
-      background: #f8f9fa;
-      border-radius: 8px;
-      border: 1px solid #ddd;
-    }
-    
-    .summary h3 {
-      color: #1e3a5f;
-      margin-bottom: 12px;
-      font-size: 18px;
-    }
-    
-    .summary-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 6px 0;
-      font-weight: bold;
-      font-size: 14px;
-      border-bottom: 1px dashed #eee;
-    }
-    
-    .summary-item:last-child {
-      border-bottom: none;
-    }
-    
-    .summary-total {
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 2px solid #1e3a5f;
-      text-align: center;
-      font-weight: bold;
-      font-size: 16px;
-      color: #1e3a5f;
-    }
-    
-    .table-container {
-      overflow-x: auto;
-      margin-bottom: 20px;
-    }
-    
-    table {
-      border-collapse: collapse;
-      width: 100%;
-      font-size: 13px;
-    }
-    
-    th, td {
-      border: 1px solid #000;
-      padding: 8px 10px;
-      text-align: center;
-    }
-    
-    th {
-      background-color: #1e3a5f;
-      color: white;
-      font-weight: bold;
-      font-size: 12px;
-    }
-    
-    td {
-      font-size: 12px;
-      font-weight: bold;
-      border: 1px solid #ddd;
-    }
-    
-    .staff-name {
-      background-color: #e0e0e0;
-      font-weight: bold;
-      text-align: left;
-      min-width: 120px;
-    }
-    
-    .company-number {
-      font-size: 10px;
-      color: #666;
-    }
-    
-    .shift-day { background-color: #4CAF50; color: white; 
-    /*display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    min-height: 40px;*/
-    padding: 5px 10px;
-    border: 2px solid white;
-    border-radius: 50%;
-    font-weight: bold;
-    font-size: 12px;
-    }
-    .shift-night { background-color: #2196F3; color: white; 
-    /*display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    min-height: 40px;*/
-    padding: 5px 10px;
-    border: 2px solid white;
-    border-radius: 50%;
-    font-weight: bold;
-    font-size: 12px;
-    }
-    .shift-off { background-color: #9E9E9E; color: white; 
-    /*display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    min-height: 40px;*/
-    padding: 5px 10px;
-    border: 2px solid white;
-    border-radius: 50%;
-    font-weight: bold;
-    font-size: 12px;
-    }
-    .shift-overtime { background-color: #8B4513; color: white; 
-    /*display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    min-height: 40px;*/
-    padding: 5px 10px;
-    border: 2px solid white;
-    border-radius: 50%;
-    font-weight: bold;
-    font-size: 12px;
-    }
-    
-    .footer {
-      text-align: center;
-      padding: 15px;
-      margin-top: 20px;
-      border-top: 1px solid #ddd;
-      font-size: 12px;
-      color: #999;
-    }
-    
-    @media print {
-      body { padding: 10px !important; background: white !important; }
-      .print-container { box-shadow: none !important; padding: 10px !important; max-width: 100% !important; }
-      .header h1 { font-size: 24px !important; }
-      table { font-size: 11px !important; page-break-inside: avoid !important; }
-      th { font-size: 10px !important; }
-      td { font-size: 10px !important; }
-      .staff-name { font-size: 10px !important; min-width: 80px !important; }
-      thead { display: table-header-group !important; }
-      tr { page-break-inside: avoid !important; }
-      @page { size: ANSI-C landscape; margin: 0.3in; }
-    }
-  </style>
-</head>
-<body>
-  <div class="print-container">
-    <div class="header">
-      <h1>${roster.name}</h1>
-      <p>${formatDate(roster.startDate)} - ${formatDate(roster.endDate)}</p>
-      <p>Created: ${formatDate(roster.createdAt)}</p>
-      <div class="meta">
-        Version: ${currentSnapshot.version} | Employees: ${roster.employees.length} | Days: ${currentData.headers.length}
-      </div>
-    </div>
-
-    <div class="summary">
-      <h3>📊 Shifts Summary</h3>
-      ${currentData.summary.map((item: any) => `
-        <div class="summary-item">
-          <span>${item.name}</span>
-          <span>${item.shifts} shifts</span>
+    // Build the HTML content for PDF
+    tempDiv.innerHTML = `
+      <div style="max-width: 1200px; margin: 0 auto;">
+        <div style="text-align: center; padding: 20px; margin-bottom: 30px; border-bottom: 2px solid #1e3a5f;">
+          <h1 style="color: #1e3a5f; font-size: 28px; margin-bottom: 8px;">${roster.name}</h1>
+          <p style="color: #555; font-size: 14px; margin: 4px 0;">
+            ${formatDate(roster.startDate)} - ${formatDate(roster.endDate)}
+          </p>
+          <p style="color: #999; font-size: 12px; margin-top: 10px;">
+            Version: ${currentSnapshot.version} | Employees: ${roster.employees.length} | Days: ${currentData.headers.length}
+          </p>
         </div>
-      `).join('')}
-      <div class="summary-total">
-        Total: ${currentData.summary.reduce((acc: number, item: any) => acc + item.shifts, 0)} shifts
-      </div>
-    </div>
 
-    <div class="table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>Employee</th>
-            ${currentData.headers.map((h: string) => `<th>${h}</th>`).join('')}
-          </tr>
-        </thead>
-        <tbody>
-          ${roster.employees.map((employee) => `
-            <tr>
-              <td class="staff-name">
-                <strong>${employee.name}</strong>
-                <br />
-                <span class="company-number">#${employee.companyNumber}</span>
-              </td>
-              ${currentData.rows[employee.id]?.map((shift: string) => `
-                <td><div class="shift-${shift.toLowerCase()}">${shift}</div></td>
-              `).join('')}
-            </tr>
+        <div style="padding: 20px; margin-bottom: 30px; background: #f8f9fa; border-radius: 8px; border: 1px solid #ddd;">
+          <h3 style="color: #1e3a5f; margin-bottom: 12px; font-size: 18px;">📊 Shifts Summary</h3>
+          ${currentData.summary.map((item: any) => `
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; font-weight: bold; font-size: 14px; border-bottom: 1px dashed #eee;">
+              <span>${item.name}</span>
+              <span>${item.shifts} shifts</span>
+            </div>
           `).join('')}
-        </tbody>
-      </table>
-    </div>
+          <div style="margin-top: 12px; padding-top: 12px; border-top: 2px solid #1e3a5f; text-align: center; font-weight: bold; font-size: 16px; color: #1e3a5f;">
+            Total: ${currentData.summary.reduce((acc: number, item: any) => acc + item.shifts, 0)} shifts
+          </div>
+        </div>
 
-    <div class="footer">
-      Downloaded on ${new Date().toLocaleString()} | ${roster.name}
-    </div>
-  </div>
-</body>
-</html>
-  `;
+        <div style="overflow-x: auto; margin-bottom: 20px;">
+          <table style="border-collapse: collapse; width: 100%; font-size: 12px;">
+            <thead>
+              <tr>
+                <th style="border: 1px solid #000; padding: 8px 10px; text-align: center; background-color: #1e3a5f; color: white; font-weight: bold;">Employee</th>
+                ${currentData.headers.map((h: string) => `
+                  <th style="border: 1px solid #000; padding: 8px 10px; text-align: center; background-color: #1e3a5f; color: white; font-weight: bold; min-width: 50px;">${h}</th>
+                `).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${roster.employees.map((employee) => `
+                <tr>
+                  <td style="border: 1px solid #ddd; padding: 8px 10px; text-align: left; background-color: #e0e0e0; font-weight: bold; min-width: 120px;">
+                    <strong>${employee.name}</strong>
+                    <br />
+                    <span style="font-size: 10px; color: #666;">#${employee.companyNumber}</span>
+                  </td>
+                  ${currentData.rows[employee.id]?.map((shift: string) => `
+                    <td style="border: 1px solid #ddd; padding: 6px 8px; text-align: center;">
+                      <span style="
+                        display: inline-block;
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        font-weight: bold;
+                        font-size: 11px;
+                        background-color: ${getShiftColor(shift)};
+                        color: white;
+                        min-width: 40px;
+                      ">${shift}</span>
+                    </td>
+                  `).join('')}
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
 
-  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${roster.name.replace(/\s+/g, '_')}_roster.html`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-  
-  setShowDownloadPreview(false);
-  alert('✅ Roster downloaded successfully!');
-}, [roster, currentSnapshot, getGeneratedData, formatDate]);
+        <div style="text-align: center; padding: 15px; margin-top: 20px; border-top: 1px solid #ddd; font-size: 12px; color: #999;">
+          Generated on ${new Date().toLocaleString()} | ${roster.name}
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(tempDiv);
+    
+    // Close the download preview
+    setShowDownloadPreview(false);
+    
+    // Show a loading indicator (using a simple alert or you can implement a toast)
+    console.log('Generating PDF...');
+    
+    // Determine if we need custom page size for wide tables
+    const columnCount = currentData.headers.length + 1; // +1 for employee name
+    const needsWideFormat = columnCount > 15;
+    
+    // Configure PDF options
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: `${roster.name.replace(/\s+/g, '_')}_roster.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        width: 1200,
+        height: tempDiv.scrollHeight,
+        logging: false,
+        letterRendering: true
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: needsWideFormat ? [46, 29.7] : 'a4', // Custom width for wide tables
+        orientation: 'landscape'
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+    
+    // Generate and download PDF
+    await window.html2pdf().set(opt).from(tempDiv).save();
+    
+    // Clean up
+    document.body.removeChild(tempDiv);
+    
+    alert('✅ PDF downloaded successfully!');
+  } catch (error) {
+    console.error('PDF generation failed:', error);
+    alert('Failed to generate PDF. Please try again.');
+    // Reopen preview if download fails
+    setShowDownloadPreview(true);
+  }
+}, [roster, currentSnapshot, getGeneratedData, formatDate, getShiftColor]);
 
   if (loading) {
     return (
@@ -845,7 +716,7 @@ const handleActualDownload = useCallback(() => {
     getShiftDisplay={getShiftDisplay}
     formatDate={formatDate}
     onClose={handleCloseDownloadPreview}
-    onDownload={handleActualDownload}
+    onDownload={handlePrint}
   />
 )}
 

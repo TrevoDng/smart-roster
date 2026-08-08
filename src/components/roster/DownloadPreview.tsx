@@ -175,7 +175,7 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
 
 // Styles
 const overlayStyle: React.CSSProperties = {
-  position: 'relative',
+  position: 'fixed',
   top: 0,
   left: 0,
   right: 0,
@@ -191,9 +191,9 @@ const overlayStyle: React.CSSProperties = {
 const containerStyle: React.CSSProperties = {
   backgroundColor: 'white',
   borderRadius: '12px',
-  width: '100%',
+  width: '95%',
   maxWidth: '1400px',
-  maxHeight: '100vh',
+  maxHeight: '95vh',
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
