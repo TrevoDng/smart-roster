@@ -1,4 +1,4 @@
-import { User, Roster, RosterChange, RosterSnapshot } from '../types';
+import { User, Roster, RosterChange, RosterSnapshot, Employee, LeaveRequest, LeaveBalance, Payslip, AccrualRule } from '../types';
 
 const STORAGE_KEYS = {
   USERS: 'roster_users',
@@ -6,6 +6,11 @@ const STORAGE_KEYS = {
   CHANGES: 'roster_changes',
   SNAPSHOTS: 'roster_snapshots',
   CURRENT_USER: 'roster_current_user',
+  EMPLOYEES: 'hr_employees',          // NEW
+  LEAVE_REQUESTS: 'hr_leave_requests', // NEW
+  LEAVE_BALANCES: 'hr_leave_balances', // NEW
+  PAYSLIPS: 'hr_payslips',             // NEW
+  ACCRUAL_RULES: 'hr_accrual_rules',   // NEW
 };
 
 // Generate random ID (similar to SQL auto-increment)
@@ -187,4 +192,138 @@ export const deleteSnapshotsAfterVersion = (rosterId: string, version: number): 
 export const getSnapshotCount = (rosterId: string): number => {
   const snapshots = getSnapshots();
   return snapshots.filter(s => s.rosterId === rosterId).length;
+};
+
+// ============================================
+// EMPLOYEE STORAGE FUNCTIONS
+// ============================================
+export const getAllEmployees = (): Employee[] => {
+  return getData<Employee[]>(STORAGE_KEYS.EMPLOYEES) || [];
+};
+
+export const getEmployeeById = (id: string): Employee | undefined => {
+  const employees = getAllEmployees();
+  return employees.find(e => e.id === id);
+};
+
+export const saveEmployee = (employee: Employee): void => {
+  const employees = getAllEmployees();
+  const index = employees.findIndex(e => e.id === employee.id);
+  if (index !== -1) {
+    employees[index] = employee;
+  } else {
+    employees.push(employee);
+  }
+  setData(STORAGE_KEYS.EMPLOYEES, employees);
+};
+
+export const deleteEmployee = (id: string): void => {
+  const employees = getAllEmployees();
+  const filtered = employees.filter(e => e.id !== id);
+  setData(STORAGE_KEYS.EMPLOYEES, filtered);
+};
+
+// ============================================
+// LEAVE STORAGE FUNCTIONS
+// ============================================
+export const getLeaveRequests = (): LeaveRequest[] => {
+  return getData<LeaveRequest[]>(STORAGE_KEYS.LEAVE_REQUESTS) || [];
+};
+
+export const getLeaveRequestsByEmployee = (employeeId: string): LeaveRequest[] => {
+  const requests = getLeaveRequests();
+  return requests.filter(r => r.employeeId === employeeId);
+};
+
+export const saveLeaveRequest = (request: LeaveRequest): void => {
+  const requests = getLeaveRequests();
+  const index = requests.findIndex(r => r.id === request.id);
+  if (index !== -1) {
+    requests[index] = request;
+  } else {
+    requests.push(request);
+  }
+  setData(STORAGE_KEYS.LEAVE_REQUESTS, requests);
+};
+
+export const getLeaveBalances = (): LeaveBalance[] => {
+  return getData<LeaveBalance[]>(STORAGE_KEYS.LEAVE_BALANCES) || [];
+};
+
+export const getLeaveBalanceByEmployee = (employeeId: string, year: number): LeaveBalance | undefined => {
+  const balances = getLeaveBalances();
+  return balances.find(b => b.employeeId === employeeId && b.year === year);
+};
+
+export const saveLeaveBalance = (balance: LeaveBalance): void => {
+  const balances = getLeaveBalances();
+  const index = balances.findIndex(b => b.employeeId === balance.employeeId && b.year === balance.year);
+  if (index !== -1) {
+    balances[index] = balance;
+  } else {
+    balances.push(balance);
+  }
+  setData(STORAGE_KEYS.LEAVE_BALANCES, balances);
+};
+
+// ============================================
+// PAYROLL STORAGE FUNCTIONS
+// ============================================
+export const getPayslips = (): Payslip[] => {
+  return getData<Payslip[]>(STORAGE_KEYS.PAYSLIPS) || [];
+};
+
+export const getPayslipsByEmployee = (employeeId: string): Payslip[] => {
+  const payslips = getPayslips();
+  return payslips.filter(p => p.employeeId === employeeId).sort((a, b) => {
+    if (a.year !== b.year) return b.year - a.year;
+    return b.month - a.month;
+  });
+};
+
+export const getPayslipById = (id: string): Payslip | undefined => {
+  const payslips = getPayslips();
+  return payslips.find(p => p.id === id);
+};
+
+export const savePayslip = (payslip: Payslip): void => {
+  const payslips = getPayslips();
+  const index = payslips.findIndex(p => p.id === payslip.id);
+  if (index !== -1) {
+    payslips[index] = payslip;
+  } else {
+    payslips.push(payslip);
+  }
+  setData(STORAGE_KEYS.PAYSLIPS, payslips);
+};
+
+// ============================================
+// ACCRUAL RULES STORAGE
+// ============================================
+export const getAccrualRules = (): AccrualRule[] => {
+  return getData<AccrualRule[]>(STORAGE_KEYS.ACCRUAL_RULES) || [];
+};
+
+export const saveAccrualRule = (rule: AccrualRule): void => {
+  const rules = getAccrualRules();
+  const index = rules.findIndex(r => r.id === rule.id);
+  if (index !== -1) {
+    rules[index] = rule;
+  } else {
+    rules.push(rule);
+  }
+  setData(STORAGE_KEYS.ACCRUAL_RULES, rules);
+};
+
+// Initialize default accrual rules
+export const initializeDefaultRules = (): void => {
+  const rules = getAccrualRules();
+  if (rules.length === 0) {
+    const defaultRules: AccrualRule[] = [
+      { id: generateId(), leaveType: 'annual', daysPerMonth: 1.5, maxAccrual: 18, carryOver: true },
+      { id: generateId(), leaveType: 'sick', daysPerMonth: 0.5, maxAccrual: 6, carryOver: false },
+      { id: generateId(), leaveType: 'personal', daysPerMonth: 0.25, maxAccrual: 3, carryOver: false },
+    ];
+    setData(STORAGE_KEYS.ACCRUAL_RULES, defaultRules);
+  }
 };

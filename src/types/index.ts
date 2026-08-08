@@ -139,3 +139,93 @@ export interface RosterSnapshot {
   changedAt: string;
 }
 
+// ============================================
+// EMPLOYEE TYPES (Enhanced)
+// ============================================
+export interface Employee {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phone: string;
+  companyNumber: string;
+  startDate: string;              // Employment start date
+  endDate?: string;               // Employment end date (if terminated)
+  status: 'active' | 'inactive' | 'terminated';
+  position: string;               // Job title/position
+  department: string;             // Department
+  salary: number;                 // Monthly salary
+  leaveBalance: number;           // Current available leave days
+  totalLeaveAccrued: number;      // Total leave days accrued
+  totalLeaveTaken: number;        // Total leave days taken
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================
+// LEAVE TYPES
+// ============================================
+export interface LeaveRequest {
+  id: string;
+  employeeId: string;
+  startDate: string;
+  endDate: string;
+  totalDays: number;              // Total working days (excluding weekends)
+  leaveType: 'annual' | 'sick' | 'personal' | 'other';
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  approvedBy?: string;            // Manager/Admin ID
+  approvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  notes?: string;
+}
+
+export interface LeaveBalance {
+  employeeId: string;
+  totalAnnual: number;            // Total annual leave days
+  usedAnnual: number;             // Used annual leave days
+  remainingAnnual: number;        // Remaining annual leave days
+  totalSick: number;              // Total sick leave days
+  usedSick: number;              // Used sick leave days
+  remainingSick: number;         // Remaining sick leave days
+  year: number;                   // Year this balance applies to
+}
+
+// ============================================
+// PAYROLL TYPES
+// ============================================
+export interface Payslip {
+  id: string;
+  employeeId: string;
+  month: number;                  // 1-12
+  year: number;
+  basicSalary: number;            // Base salary
+  overtimePay: number;            // Overtime earnings
+  bonusPay: number;              // Bonus/commission
+  totalEarnings: number;         // Basic + Overtime + Bonus
+  
+  taxDeduction: number;          // Tax deduction
+  pensionDeduction: number;      // Pension/retirement
+  medicalDeduction: number;      // Medical aid
+  otherDeductions: number;       // Other deductions
+  totalDeductions: number;       // Sum of all deductions
+  
+  netPay: number;                // Total earnings - total deductions
+  daysWorked: number;            // Days actually worked
+  daysOnLeave: number;           // Days on leave
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================
+// LEAVE ACCRUAL RULES
+// ============================================
+export interface AccrualRule {
+  id: string;
+  leaveType: 'annual' | 'sick' | 'personal';
+  daysPerMonth: number;          // Days accrued per month
+  maxAccrual: number;            // Maximum days that can be accumulated
+  carryOver: boolean;            // Can unused days carry over to next year?
+}

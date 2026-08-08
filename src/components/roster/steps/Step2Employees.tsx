@@ -21,7 +21,7 @@ const Step2Employees: React.FC<Step2EmployeesProps> = ({
   name: '',
   phone: '',
   email: '',
-  companyNumber: generateCompanyNumber(),
+  companyNumber: '',
   circlePattern: ['Day', 'Day', 'Night', 'Night', 'Off', 'Off'], // Default 6-slot
 });
   const [error, setError] = useState('');
@@ -69,7 +69,7 @@ const Step2Employees: React.FC<Step2EmployeesProps> = ({
       name: '',
       phone: '',
       email: '',
-      companyNumber: generateCompanyNumber(),
+      companyNumber: '',
       circlePattern: ['Day', 'Day', 'Night', 'Night', 'Off', 'Off'],
     });
   };
@@ -170,10 +170,10 @@ const Step2Employees: React.FC<Step2EmployeesProps> = ({
               name="companyNumber"
               value={formData.companyNumber || ''}
               onChange={handleChange}
-              style={{ ...inputStyle, backgroundColor: '#f0f0f0' }}
-              readOnly
+              style={{ ...inputStyle, backgroundColor: '#ffffff' }}
+              placeholder="Enter employee's company number"
             />
-            <small style={helperStyle}>Auto-generated</small>
+           {/**  <small style={helperStyle}>Auto-generated</small> */}
           </div>
         </div>
 
@@ -195,7 +195,7 @@ const Step2Employees: React.FC<Step2EmployeesProps> = ({
                 name: '',
                 phone: '',
                 email: '',
-                companyNumber: generateCompanyNumber(),
+                companyNumber: '',
                 circlePattern: ['Day', 'Day', 'Night', 'Night', 'Off', 'Off'],
               });
             }} 

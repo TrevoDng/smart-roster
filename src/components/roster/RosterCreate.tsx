@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { generateId, saveRoster, saveSnapshot } from '../../utils/storage';
-import { Roster, EmployeeFormData } from '../../types';
+import { Roster, EmployeeFormData, Employee } from '../../types';
 import { createRosterName, createInitialSnapshot } from '../../utils/rosterHelpers';
 import Navigation from '../common/Navigation';
 import Step1Dates from './steps/Step1Dates';
@@ -54,15 +54,7 @@ const RosterCreate: React.FC = () => {
         startDate: formData.startDate,
         endDate: formData.endDate,
         name: rosterName,
-        employees: formData.employees.map(e => ({
-          ...e,
-          id: e.id,
-          name: e.name,
-          phone: e.phone,
-          email: e.email,
-          companyNumber: e.companyNumber,
-          circlePattern: e.circlePattern,
-        })),
+        employees: formData.employees as unknown as Employee[],
         currentVersion: 1,
         createdAt: new Date().toISOString(),
         createdBy: user.id,

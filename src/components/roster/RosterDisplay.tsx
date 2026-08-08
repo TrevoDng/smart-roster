@@ -20,6 +20,7 @@ import RosterTable from './RosterTable';
 import RosterSummary from './RosterSummary';
 import RosterHistory from './RosterHistory';
 import PrintPage from './PrintPage';
+import DownloadPreview from './DownloadPreview';
 
 // Define a pending change type
 interface PendingChange {
@@ -59,6 +60,8 @@ const RosterDisplay: React.FC = () => {
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPrintView, setShowPrintView] = useState(false);
+  // Add this state
+const [showDownloadPreview, setShowDownloadPreview] = useState(false);
   
   // State for version delete
   const [versionToDelete, setVersionToDelete] = useState<number | null>(null);
@@ -463,12 +466,23 @@ const handleClosePrintView = useCallback(() => {
   }, [pendingChanges.length]);
 
   // Download roster as HTML file
+  // Open download preview
 const handleDownload = useCallback(() => {
+  if (!roster || !currentSnapshot) return;
+  setShowDownloadPreview(true);
+}, [roster, currentSnapshot]);
+
+// Close download preview
+const handleCloseDownloadPreview = useCallback(() => {
+  setShowDownloadPreview(false);
+}, []);
+
+// Actual download function (called from preview)
+const handleActualDownload = useCallback(() => {
   if (!roster || !currentSnapshot) return;
   
   const currentData = getGeneratedData(currentSnapshot);
   
-  // Build the HTML content
   const htmlContent = `
 <!DOCTYPE html>
 <html>
@@ -477,7 +491,6 @@ const handleDownload = useCallback(() => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${roster.name} - Roster</title>
   <style>
-    /* Reset and base styles */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { 
       font-family: Arial, sans-serif; 
@@ -498,7 +511,6 @@ const handleDownload = useCallback(() => {
       box-shadow: 0 2px 20px rgba(0,0,0,0.1);
     }
     
-    /* Header */
     .header {
       text-align: center;
       padding: 20px;
@@ -524,7 +536,6 @@ const handleDownload = useCallback(() => {
       color: #999;
     }
     
-    /* Summary */
     .summary {
       padding: 20px;
       margin-bottom: 30px;
@@ -562,7 +573,6 @@ const handleDownload = useCallback(() => {
       color: #1e3a5f;
     }
     
-    /* Table */
     .table-container {
       overflow-x: auto;
       margin-bottom: 20px;
@@ -590,6 +600,7 @@ const handleDownload = useCallback(() => {
     td {
       font-size: 12px;
       font-weight: bold;
+      border: 1px solid #ddd;
     }
     
     .staff-name {
@@ -604,13 +615,55 @@ const handleDownload = useCallback(() => {
       color: #666;
     }
     
-    /* Shift colors */
-    .shift-day { background-color: #4CAF50; color: white; }
-    .shift-night { background-color: #2196F3; color: white; }
-    .shift-off { background-color: #9E9E9E; color: white; }
-    .shift-overtime { background-color: #8B4513; color: white; }
+    .shift-day { background-color: #4CAF50; color: white; 
+    /*display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;*/
+    padding: 5px 10px;
+    border: 2px solid white;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 12px;
+    }
+    .shift-night { background-color: #2196F3; color: white; 
+    /*display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;*/
+    padding: 5px 10px;
+    border: 2px solid white;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 12px;
+    }
+    .shift-off { background-color: #9E9E9E; color: white; 
+    /*display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;*/
+    padding: 5px 10px;
+    border: 2px solid white;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 12px;
+    }
+    .shift-overtime { background-color: #8B4513; color: white; 
+    /*display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;*/
+    padding: 5px 10px;
+    border: 2px solid white;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 12px;
+    }
     
-    /* Footer */
     .footer {
       text-align: center;
       padding: 15px;
@@ -620,70 +673,22 @@ const handleDownload = useCallback(() => {
       color: #999;
     }
     
-    /* Print styles */
     @media print {
-      body {
-        padding: 10px !important;
-        background: white !important;
-      }
-      
-      .print-container {
-        box-shadow: none !important;
-        padding: 10px !important;
-        max-width: 100% !important;
-      }
-      
-      .header h1 {
-        font-size: 24px !important;
-      }
-      
-      table {
-        font-size: 11px !important;
-        page-break-inside: avoid !important;
-      }
-      
-      th {
-        font-size: 10px !important;
-      }
-      
-      td {
-        font-size: 10px !important;
-      }
-
-      .circle {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                font-weight: bold;
-                font-size: 12px;
-            }
-      
-      .staff-name {
-        font-size: 10px !important;
-        min-width: 80px !important;
-      }
-      
-      thead {
-        display: table-header-group !important;
-      }
-      
-      tr {
-        page-break-inside: avoid !important;
-      }
-      
-      @page {
-        size: ANSI-C landscape;
-        margin: 0.3in;
-      }
+      body { padding: 10px !important; background: white !important; }
+      .print-container { box-shadow: none !important; padding: 10px !important; max-width: 100% !important; }
+      .header h1 { font-size: 24px !important; }
+      table { font-size: 11px !important; page-break-inside: avoid !important; }
+      th { font-size: 10px !important; }
+      td { font-size: 10px !important; }
+      .staff-name { font-size: 10px !important; min-width: 80px !important; }
+      thead { display: table-header-group !important; }
+      tr { page-break-inside: avoid !important; }
+      @page { size: ANSI-C landscape; margin: 0.3in; }
     }
   </style>
 </head>
 <body>
   <div class="print-container">
-    <!-- Header -->
     <div class="header">
       <h1>${roster.name}</h1>
       <p>${formatDate(roster.startDate)} - ${formatDate(roster.endDate)}</p>
@@ -693,7 +698,6 @@ const handleDownload = useCallback(() => {
       </div>
     </div>
 
-    <!-- Summary -->
     <div class="summary">
       <h3>📊 Shifts Summary</h3>
       ${currentData.summary.map((item: any) => `
@@ -707,7 +711,6 @@ const handleDownload = useCallback(() => {
       </div>
     </div>
 
-    <!-- Table -->
     <div class="table-container">
       <table>
         <thead>
@@ -725,15 +728,7 @@ const handleDownload = useCallback(() => {
                 <span class="company-number">#${employee.companyNumber}</span>
               </td>
               ${currentData.rows[employee.id]?.map((shift: string) => `
-                <td class="shifft-${shift.toLowerCase()}">
-                <div class="shifft-${shift.toLowerCase()} circle" style="display: inlineFlex;
-                alignItems: center;
-                justifyContent: center;
-                width: 40px;
-                height: 40px;
-                borderRadius: 50%;
-                fontWeight: bold;
-                fontSize: 12px;">${shift}</div></td>
+                <td><div class="shift-${shift.toLowerCase()}">${shift}</div></td>
               `).join('')}
             </tr>
           `).join('')}
@@ -741,7 +736,6 @@ const handleDownload = useCallback(() => {
       </table>
     </div>
 
-    <!-- Footer -->
     <div class="footer">
       Downloaded on ${new Date().toLocaleString()} | ${roster.name}
     </div>
@@ -750,7 +744,6 @@ const handleDownload = useCallback(() => {
 </html>
   `;
 
-  // Create blob and download
   const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -761,6 +754,7 @@ const handleDownload = useCallback(() => {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
   
+  setShowDownloadPreview(false);
   alert('✅ Roster downloaded successfully!');
 }, [roster, currentSnapshot, getGeneratedData, formatDate]);
 
@@ -841,6 +835,19 @@ const handleDownload = useCallback(() => {
             formatDateTime={formatDateTime}
           />
         </div>
+
+        {/* Download Preview */}
+{showDownloadPreview && currentSnapshot && (
+  <DownloadPreview
+    roster={roster}
+    snapshot={currentSnapshot}
+    getShiftColor={getShiftColor}
+    getShiftDisplay={getShiftDisplay}
+    formatDate={formatDate}
+    onClose={handleCloseDownloadPreview}
+    onDownload={handleActualDownload}
+  />
+)}
 
         {/* ... rest of modals ... */}
         {/* Edit Modal - Add to pending changes */}
