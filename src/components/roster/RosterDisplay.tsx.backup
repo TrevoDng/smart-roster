@@ -494,7 +494,8 @@ const handleActualDownload = useCallback(() => {
   
   const currentData = getGeneratedData(currentSnapshot);
   
-  const htmlContent = `<!DOCTYPE html>
+  const htmlContent = `
+<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -559,36 +560,20 @@ const handleActualDownload = useCallback(() => {
     <div class="footer">Generated on ${new Date().toLocaleString()} | ${roster.name}</div>
   </div>
 </body>
-</html>`;
+</html>
+  `;
 
-  try {
-    const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${roster.name.replace(/\s+/g, '_')}_roster.html`;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    
-    setTimeout(() => {
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }, 100);
-    
-    console.log('✅ Roster downloaded successfully!');
-  } catch (error) {
-    console.error('Download failed:', error);
-    const newWindow = window.open('', '_blank');
-    if (newWindow) {
-      newWindow.document.write(htmlContent);
-      newWindow.document.close();
-      newWindow.focus();
-      console.log('✅ Roster opened in new tab! Use "Save as" to download.');
-    } else {
-      console.error('Unable to download. Please allow popups or use a different browser.');
-    }
-  }
+  const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${roster.name.replace(/\s+/g, '_')}_roster.html`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  setTimeout(() => { URL.revokeObjectURL(url); }, 5000);
+  
+  alert('Roster downloaded as HTML file! Open it and use Save as PDF from print dialog.');
 }, [roster, currentSnapshot, getGeneratedData, formatDate, getShiftColor]);
 
   if (loading) {
