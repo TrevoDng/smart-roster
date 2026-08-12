@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useRef } from 'react';
 import RosterTable from './RosterTable';
 import RosterSummary from './RosterSummary';
 import { Roster, RosterSnapshot } from '../../types';
@@ -21,61 +21,28 @@ const PrintPage: React.FC<PrintPageProps> = ({
   onClose,
 }) => {
   const currentData = (snapshot.data as any).generatedData;
+  const contentRef = useRef<HTMLDivElement>(null);
 
-  // Auto-print when component mounts
-  useEffect(() => {
-    // Wait for the page to render completely
-    const timer = setTimeout(() => {
-      window.print();
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Handle print after the print dialog closes
-  const handleAfterPrint = () => {
-    // Close the print view after printing
-    onClose();
+  // Manual print function
+  const handlePrint = () => {
+    window.print();
   };
-
-  // Listen for afterprint event
-  useEffect(() => {
-    window.addEventListener('afterprint', handleAfterPrint);
-    return () => {
-      window.removeEventListener('afterprint', handleAfterPrint);
-    };
-  }, []);
 
   return (
     <div className="print-page-container" style={containerStyle}>
-      {/* Close button - only visible on screen, hidden in print */}
-      <button 
-        onClick={onClose} 
-        style={closeButtonStyle}
-        className="no-print"
-      >
-        ✕ Close Print View
-      </button>
+      {/* Controls - only visible on screen, hidden in print */}
+      <div className="no-print" style={controlsStyle}>
+        <button onClick={onClose} style={closeButtonStyle}>
+          ✕ Close
+        </button>
+        <button onClick={handlePrint} style={printButtonStyle}>
+          🖨️ Print / Save as PDF
+        </button>
+        <span style={hintStyle}>💡 Tip: Use "Save as PDF" in print dialog</span>
+      </div>
 
-      <div className="print-content" style={contentStyle}>
-        {/* Summary - Top (Order 1) */}
-        <div className="print-summary" style={summaryStyle}>
-          <RosterSummary summary={currentData.summary} isPrintView={true} />
-        </div>
-
-        {/* Table - Middle (Order 2) */}
-        <div className="print-table-container" style={tableContainerStyle}>
-          <RosterTable
-            roster={roster}
-            headers={currentData.headers}
-            rows={currentData.rows}
-            getShiftColor={getShiftColor}
-            getShiftDisplay={getShiftDisplay}
-            isPrintView={true}
-          />
-        </div>
-
-        {/* Header - Bottom (Order 3) */}
+      <div ref={contentRef} className="print-content" style={contentStyle}>
+        {/* Header - Top (Order 1) */}
         <div className="print-header" style={headerStyle}>
           <h2 style={headerTitleStyle}>{roster.name}</h2>
           <p>{formatDate(roster.startDate)} - {formatDate(roster.endDate)}</p>
@@ -91,6 +58,23 @@ const PrintPage: React.FC<PrintPageProps> = ({
           <div style={infoStyle}>
             Days: {currentData.headers.length}
           </div>
+        </div>
+
+        {/* Summary - Middle (Order 2) */}
+        <div className="print-summary" style={summaryStyle}>
+          <RosterSummary summary={currentData.summary} isPrintView={true} />
+        </div>
+
+        {/* Table - Bottom (Order 3) */}
+        <div className="print-table-container" style={tableContainerStyle}>
+          <RosterTable
+            roster={roster}
+            headers={currentData.headers}
+            rows={currentData.rows}
+            getShiftColor={getShiftColor}
+            getShiftDisplay={getShiftDisplay}
+            isPrintView={true}
+          />
         </div>
       </div>
     </div>
@@ -109,11 +93,23 @@ const containerStyle: React.CSSProperties = {
   position: 'relative',
 };
 
+const controlsStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: '12px',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexWrap: 'wrap',
+  marginBottom: '20px',
+  padding: '12px 20px',
+  backgroundColor: 'white',
+  borderRadius: '12px',
+  boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+  width: '100%',
+  maxWidth: '1000px',
+};
+
 const closeButtonStyle: React.CSSProperties = {
-  position: 'fixed',
-  top: '20px',
-  right: '20px',
-  padding: '10px 20px',
+  padding: '10px 24px',
   backgroundColor: '#dc3545',
   color: 'white',
   border: 'none',
@@ -121,7 +117,23 @@ const closeButtonStyle: React.CSSProperties = {
   cursor: 'pointer',
   fontSize: '16px',
   fontWeight: 'bold',
-  zIndex: 1000,
+};
+
+const printButtonStyle: React.CSSProperties = {
+  padding: '10px 24px',
+  backgroundColor: '#1e3a5f',
+  color: 'white',
+  border: 'none',
+  borderRadius: '8px',
+  cursor: 'pointer',
+  fontSize: '16px',
+  fontWeight: 'bold',
+  boxShadow: '0 2px 8px rgba(30, 58, 95, 0.3)',
+};
+
+const hintStyle: React.CSSProperties = {
+  fontSize: '13px',
+  color: '#666',
 };
 
 const contentStyle: React.CSSProperties = {
@@ -217,6 +229,18 @@ const printStyles = `
       transform: none !important;
       width: 100% !important;
       max-width: 100% !important;
+    }
+    
+    .print-header {
+      order: 0 !important;
+    }
+    
+    .print-summary {
+      order: 1 !important;
+    }
+    
+    .print-table-container {
+      order: 2 !important;
     }
     
     @page {
