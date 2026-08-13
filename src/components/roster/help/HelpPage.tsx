@@ -40,7 +40,7 @@ const HelpPage: React.FC = () => {
       {/* Header */}
       <div style={headerStyle}>
         <div style={headerLeftStyle}>
-          <BackButton label="← Back to Roster" />
+          <BackButton label="Back to Roster" />
         </div>
         <h1 style={titleStyle}>📖 How to Use the System</h1>
         <div style={headerRightStyle}></div>
@@ -202,6 +202,7 @@ const titleStyle: React.CSSProperties = {
 };
 
 const navContainerStyle: React.CSSProperties = {
+  position: 'relative',
   backgroundColor: 'white',
   borderRadius: '12px',
   padding: '20px 30px',
@@ -213,6 +214,8 @@ const navButtonsStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(4, 1fr)',
   gap: '12px',
+  maxWidth: '100%',
+  overflow: 'auto',
   marginBottom: '16px',
 };
 
