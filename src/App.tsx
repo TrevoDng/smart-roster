@@ -8,6 +8,7 @@ import Dashboard from './components/common/Dashboard';
 import RosterCreate from './components/roster/RosterCreate';
 import RosterDisplay from './components/roster/RosterDisplay';
 import ProtectedRoute from './components/common/ProtectedRoute';
+import { HelpPage } from './components/roster/help';
 // @ts-ignore-next-line
 import './App.css';
 
@@ -46,17 +47,12 @@ function App() {
               </ProtectedRoute>
             } />
 
-            {/* 
-            <Route path="/roster/:id/snapshot/:snapshotId" element={
+            {/* Help Page */}
+            <Route path="/help" element={
               <ProtectedRoute>
-                <RosterDisplay />
+                <HelpPage />
               </ProtectedRoute>
             } />
-            <Route path="/roster/:id/snapshot/:snapshotId/compare/:compareSnapshotId" element={
-              <ProtectedRoute>
-                <RosterDisplay />
-              </ProtectedRoute>
-            } /> */}
             
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Roster, RosterSnapshot } from '../../types';
 import RosterTable from './RosterTable';
@@ -12,6 +11,7 @@ interface DownloadPreviewProps {
   formatDate: (date: string) => string;
   onClose: () => void;
   onDownload: () => void;
+  onDownloadPdf: () => void;
 }
 
 const DownloadPreview: React.FC<DownloadPreviewProps> = ({
@@ -22,6 +22,7 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
   formatDate,
   onClose,
   onDownload,
+  onDownloadPdf,
 }) => {
   const [isRotated, setIsRotated] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -40,11 +41,6 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
 
   const toggleRotation = () => {
     setIsRotated(!isRotated);
-  };
-
-  const handleDownloadClick = () => {
-    onDownload();
-    setTimeout(() => onClose(), 1500);
   };
 
   const isTableWide = currentData.headers.length > 15;
@@ -126,12 +122,12 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
 
             {/* Footer */}
             <div style={previewFooterStyle}>
-              Downloaded: {new Date().toLocaleString()}
+              Generated: {new Date().toLocaleString()}
             </div>
           </div>
         </div>
 
-        {/* Controls - Responsive */}
+        {/* Controls - Responsive with two download buttons */}
         <div style={controlsStyle}>
           <div style={controlsLeftStyle}>
             {isTableWide && !isMobile && (
@@ -156,8 +152,11 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
             <button onClick={onClose} style={{ ...controlButtonStyle, backgroundColor: '#6c757d' }}>
               Cancel
             </button>
-            <button onClick={handleDownloadClick} style={{ ...controlButtonStyle, backgroundColor: '#28a745' }}>
-              ⬇️ Download
+            <button onClick={onDownload} style={{ ...controlButtonStyle, backgroundColor: '#17a2b8' }}>
+              📄 HTML
+            </button>
+            <button onClick={onDownloadPdf} style={{ ...controlButtonStyle, backgroundColor: '#28a745' }}>
+              📑 PDF
             </button>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Roster } from '../../types';
 
 interface RosterHeaderProps {
@@ -36,6 +37,12 @@ const RosterHeader: React.FC<RosterHeaderProps> = ({
   formatDate,
   formatDateTime,
 }) => {
+  const navigate = useNavigate();
+
+  const goToHelp = () => {
+    navigate('/help?section=print');
+  };
+
   return (
     <div style={headerStyle}>
       <div>
@@ -90,11 +97,10 @@ const RosterHeader: React.FC<RosterHeaderProps> = ({
             >
               Shift Change
             </button>
-            {/*() => {}*/}
 
             {hasPendingChanges && (
               <button 
-                onClick={handleSubmitAllChanges } // This will be handled by parent
+                onClick={handleSubmitAllChanges }
                 style={{ ...editButtonStyle, backgroundColor: '#28a745' }}
               >
                 📋 Submit All ({pendingCount})
@@ -115,8 +121,15 @@ const RosterHeader: React.FC<RosterHeaderProps> = ({
             <button 
               onClick={onDownload} 
               style={{ ...editButtonStyle, backgroundColor: '#28a745' }}
-              >
-                  ⬇️ Download
+            >
+              ⬇️ Download
+            </button>
+            {/* Help Button */}
+            <button 
+              onClick={goToHelp} 
+              style={{ ...editButtonStyle, backgroundColor: '#17a2b8' }}
+            >
+              ❓ Help
             </button>
           </div>
         )}
