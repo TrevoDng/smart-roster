@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Roster, RosterSnapshot } from '../../types';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
+import html2canvas from 'html2canvas';
 import RosterTable from './RosterTable';
 import RosterSummary from './RosterSummary';
+import TableScaleControls from '../common/TableScaleControls';
+import { Roster, RosterSnapshot } from '../../types';
 
 interface DownloadPreviewProps {
   roster: Roster;
@@ -24,387 +26,310 @@ const DownloadPreview: React.FC<DownloadPreviewProps> = ({
   onDownload,
   onDownloadPdf,
 }) => {
-  const [isRotated, setIsRotated] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const previewRef = useRef<HTMLDivElement>(null);
   const currentData = (snapshot.data as any).generatedData;
+  const contentRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
+  const captureRef = useRef<HTMLDivElement>(null);
+  
+  // Scale state - only affects table
+  const [tableScale, setTableScale] = useState<number>(100);
+  const [isAutoResized, setIsAutoResized] = useState<boolean>(false);
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  // Check if screen is mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+  // Auto-resize function - only for table
+  const handleAutoResize = useCallback(() => {
+    if (!tableRef.current) return;
+    
+    setTimeout(() => {
+      const tableElement = tableRef.current?.querySelector('table');
+      if (!tableElement) return;
+      
+      const containerWidth = window.innerWidth - 120;
+      const tableWidth = tableElement.scrollWidth;
+      
+      if (tableWidth > containerWidth) {
+        const optimalScale = Math.floor((containerWidth / tableWidth) * 100);
+        const clampedScale = Math.max(30, Math.min(100, optimalScale));
+        setTableScale(clampedScale);
+        setIsAutoResized(true);
+      } else {
+        setTableScale(100);
+        setIsAutoResized(false);
+      }
+    }, 100);
   }, []);
 
-  const toggleRotation = () => {
-    setIsRotated(!isRotated);
-  };
+  useEffect(() => {
+    handleAutoResize();
+  }, [handleAutoResize, snapshot]);
 
-  const isTableWide = currentData.headers.length > 15;
+  const handleScaleChange = useCallback((newScale: number) => {
+    setTableScale(newScale);
+    setIsAutoResized(false);
+  }, []);
+
+  // PDF Download using html2canvas - Capture FULL content
+  const handleDownloadPdfWithCanvas = useCallback(async () => {
+    if (!captureRef.current) return;
+    
+    setIsGenerating(true);
+    
+    try {
+      const captureElement = captureRef.current;
+      
+      // Force full height rendering for capture
+      const originalHeight = captureElement.style.height;
+      const originalOverflow = captureElement.style.overflow;
+      const originalMaxHeight = captureElement.style.maxHeight;
+      
+      // Set to auto height to capture all content
+      captureElement.style.height = 'auto';
+      captureElement.style.overflow = 'visible';
+      captureElement.style.maxHeight = 'none';
+      
+      // Wait for reflow
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      // Get the full dimensions
+      const width = captureElement.scrollWidth;
+      const height = captureElement.scrollHeight;
+      
+      console.log(`Capturing: ${width}x${height}`);
+      
+      // Capture the entire content
+      const canvas = await html2canvas(captureElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        width: width,
+        height: height,
+        windowWidth: width,
+        windowHeight: height,
+        scrollX: 0,
+        scrollY: 0,
+        onclone: (clonedDoc) => {
+          // Ensure cloned element shows all content
+          const clonedElement = clonedDoc.getElementById('pdf-capture-content');
+          if (clonedElement) {
+            clonedElement.style.height = 'auto';
+            clonedElement.style.overflow = 'visible';
+            clonedElement.style.maxHeight = 'none';
+          }
+        }
+      });
+      
+      // Restore original styles
+      captureElement.style.height = originalHeight;
+      captureElement.style.overflow = originalOverflow;
+      captureElement.style.maxHeight = originalMaxHeight;
+      
+      // Create PDF
+      const { jsPDF } = await import('jspdf');
+      const pdf = new jsPDF({
+        orientation: width > height ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [canvas.width, canvas.height],
+      });
+      
+      pdf.addImage(
+        canvas.toDataURL('image/png'),
+        'PNG',
+        0,
+        0,
+        canvas.width,
+        canvas.height,
+        undefined,
+        'FAST'
+      );
+      
+      pdf.save(`${roster.name.replace(/\s+/g, '_')}_roster.pdf`);
+      
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      alert('Failed to generate PDF. Please try the print option instead.');
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [roster]);
 
   return (
-    <div style={overlayStyle}>
-      <div style={containerStyle}>
-        {/* Header */}
-        <div style={headerStyle}>
-          <h2 style={titleStyle}>📄 Download Preview</h2>
-          <div style={headerControlsStyle}>
-            {isTableWide && !isMobile && (
-              <button onClick={toggleRotation} style={rotateButtonStyle}>
-                {isRotated ? '↺ Reset' : '↻ Rotate'}
-              </button>
-            )}
+    <div style={modalOverlayStyle} onClick={onClose}>
+      <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+        {/* Controls */}
+        <div style={controlsStyle}>
+          <h3 style={modalTitleStyle}>📄 Download Preview</h3>
+          <div style={buttonGroupStyle}>
             <button onClick={onClose} style={closeButtonStyle}>
-              ✕
+              ✕ Close
+            </button>
+            <button 
+              onClick={onDownload} 
+              style={{ ...buttonStyle, backgroundColor: '#6c757d' }}
+            >
+              📥 HTML
+            </button>
+            <button 
+              onClick={handleDownloadPdfWithCanvas} 
+              style={{ 
+                ...buttonStyle, 
+                backgroundColor: '#dc3545',
+                opacity: isGenerating ? 0.6 : 1,
+                cursor: isGenerating ? 'not-allowed' : 'pointer',
+              }}
+              disabled={isGenerating}
+            >
+              {isGenerating ? '⏳ Generating...' : '📄 PDF'}
             </button>
           </div>
+          
+          <TableScaleControls
+            scale={tableScale}
+            onScaleChange={handleScaleChange}
+            onAutoResize={handleAutoResize}
+            isAutoResized={isAutoResized}
+            label="Table Size:"
+          />
         </div>
 
-        {/* Preview Info - Responsive */}
-        <div style={infoBarStyle}>
-          <div style={infoGridStyle}>
-            <span style={infoItemStyle}>📋 {roster.name}</span>
-            <span style={infoItemStyle}>📅 {formatDate(roster.startDate)}</span>
-            <span style={infoItemStyle}>👥 {roster.employees.length}</span>
-            <span style={infoItemStyle}>📊 {currentData.headers.length} days</span>
-          </div>
-          {isTableWide && (
-            <div style={warningBadgeStyle}>
-              ⚠️ {currentData.headers.length} columns
-              {isMobile && ' - Scroll horizontally'}
-            </div>
-          )}
-        </div>
-
-        {/* Preview Content */}
+        {/* Preview Content - Wrapped for PDF capture */}
         <div 
-          ref={previewRef}
+          id="pdf-capture-content"
+          ref={captureRef}
           style={{
-            ...contentStyle,
-            transform: isRotated ? 'rotate(90deg)' : 'none',
-            transformOrigin: 'center center',
-            transition: 'transform 0.3s ease',
+            ...previewContentStyle,
+            height: 'auto',
+            overflow: 'visible',
+            maxHeight: 'none',
           }}
         >
-          <div style={innerContentStyle}>
-            {/* Header */}
-            <div style={previewHeaderStyle}>
-              <h3 style={previewTitleStyle}>{roster.name}</h3>
-              <p style={previewSubStyle}>
-                {formatDate(roster.startDate)} - {formatDate(roster.endDate)}
-              </p>
-              <p style={previewMetaStyle}>
-                Version: {snapshot.version} | Employees: {roster.employees.length} | Days: {currentData.headers.length}
-              </p>
-            </div>
-
-            {/* Summary */}
-            <div style={previewSummaryStyle}>
-              <RosterSummary summary={currentData.summary} isPrintView={true} />
-            </div>
-
-            {/* Table with horizontal scroll for mobile */}
-            <div style={previewTableWrapperStyle}>
-              <div style={previewTableStyle}>
-                <RosterTable
-                  roster={roster}
-                  headers={currentData.headers}
-                  rows={currentData.rows}
-                  getShiftColor={getShiftColor}
-                  getShiftDisplay={getShiftDisplay}
-                  isPrintView={true}
-                />
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div style={previewFooterStyle}>
-              Generated: {new Date().toLocaleString()}
-            </div>
+          {/* Header - NOT affected by scale */}
+          <div style={headerStyle}>
+            <h2 style={headerTitleStyle}>{roster.name}</h2>
+            <p>{formatDate(roster.startDate)} - {formatDate(roster.endDate)}</p>
+            <p>Version: {snapshot.version}</p>
           </div>
-        </div>
 
-        {/* Controls - Responsive with two download buttons */}
-        <div style={controlsStyle}>
-          <div style={controlsLeftStyle}>
-            {isTableWide && !isMobile && (
-              <button 
-                onClick={toggleRotation} 
-                style={{ ...controlButtonStyle, backgroundColor: '#17a2b8' }}
-              >
-                {isRotated ? '↺ Reset' : '↻ Rotate'}
-              </button>
-            )}
-            <span style={hintStyle}>
-              {isMobile 
-                ? '👆 Scroll table horizontally' 
-                : isRotated 
-                  ? '🔄 Rotated view' 
-                  : isTableWide 
-                    ? '💡 Click Rotate for full view' 
-                    : '✅ Ready to download'}
-            </span>
+          {/* Summary - NOT affected by scale */}
+          <div style={summaryStyle}>
+            <RosterSummary summary={currentData.summary} isPrintView={true} />
           </div>
-          <div style={controlsRightStyle}>
-            <button onClick={onClose} style={{ ...controlButtonStyle, backgroundColor: '#6c757d' }}>
-              Cancel
-            </button>
-            <button onClick={onDownload} style={{ ...controlButtonStyle, backgroundColor: '#17a2b8' }}>
-              📄 HTML
-            </button>
-            <button onClick={onDownloadPdf} style={{ ...controlButtonStyle, backgroundColor: '#28a745' }}>
-              📑 PDF
-            </button>
+
+          {/* Table - ONLY THIS is affected by scale */}
+          <div 
+            ref={tableRef}
+            style={{
+              transform: `scale(${tableScale / 100})`,
+              transformOrigin: 'top left',
+              width: `${100 / (tableScale / 100)}%`,
+              transition: 'transform 0.3s ease',
+              overflow: 'visible',
+            }}
+          >
+            <RosterTable
+              roster={roster}
+              headers={currentData.headers}
+              rows={currentData.rows}
+              getShiftColor={getShiftColor}
+              getShiftDisplay={getShiftDisplay}
+              isPrintView={true}
+            />
           </div>
         </div>
       </div>
-
-      <style>
-        {`
-          @media print {
-            .preview-content {
-              transform: none !important;
-            }
-          }
-          @media (max-width: 768px) {
-            .preview-content {
-              padding: 10px !important;
-            }
-            .preview-content.rotated {
-              transform: rotate(90deg) !important;
-            }
-          }
-        `}
-      </style>
     </div>
   );
 };
 
-// ============================================
-// RESPONSIVE STYLES
-// ============================================
-
-const overlayStyle: React.CSSProperties = {
+// Styles
+const modalOverlayStyle: React.CSSProperties = {
   position: 'fixed',
   top: 0,
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: 'rgba(0,0,0,0.6)',
-  zIndex: 9999,
+  backgroundColor: 'rgba(0,0,0,0.7)',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  padding: '10px',
+  zIndex: 1000,
+  padding: '20px',
 };
 
-const containerStyle: React.CSSProperties = {
+const modalContentStyle: React.CSSProperties = {
   backgroundColor: 'white',
   borderRadius: '12px',
+  maxWidth: '95vw',
   width: '100%',
-  maxWidth: '1400px',
-  maxHeight: '98vh',
+  maxHeight: '95vh',
+  overflow: 'hidden',
   display: 'flex',
   flexDirection: 'column',
-  overflow: 'hidden',
-};
-
-const headerStyle: React.CSSProperties = {
-  padding: '12px 16px',
-  borderBottom: '1px solid #ddd',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  backgroundColor: '#f8f9fa',
-  flexShrink: 0,
-  flexWrap: 'wrap',
-  gap: '8px',
-};
-
-const titleStyle: React.CSSProperties = {
-  margin: 0,
-  color: '#1e3a5f',
-  fontSize: 'clamp(16px, 3vw, 20px)',
-};
-
-const headerControlsStyle: React.CSSProperties = {
-  display: 'flex',
-  gap: '8px',
-};
-
-const rotateButtonStyle: React.CSSProperties = {
-  padding: '6px 12px',
-  backgroundColor: '#17a2b8',
-  color: 'white',
-  border: 'none',
-  borderRadius: '6px',
-  cursor: 'pointer',
-  fontSize: 'clamp(12px, 1.5vw, 14px)',
-  fontWeight: 'bold',
-  whiteSpace: 'nowrap',
-};
-
-const closeButtonStyle: React.CSSProperties = {
-  padding: '6px 12px',
-  backgroundColor: '#dc3545',
-  color: 'white',
-  border: 'none',
-  borderRadius: '6px',
-  cursor: 'pointer',
-  fontSize: 'clamp(12px, 1.5vw, 14px)',
-  fontWeight: 'bold',
-  whiteSpace: 'nowrap',
-};
-
-const infoBarStyle: React.CSSProperties = {
-  padding: '8px 16px',
-  backgroundColor: '#e9ecef',
-  display: 'flex',
-  flexWrap: 'wrap',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  fontSize: 'clamp(11px, 1.2vw, 13px)',
-  color: '#333',
-  flexShrink: 0,
-  borderBottom: '1px solid #ddd',
-  gap: '8px',
-};
-
-const infoGridStyle: React.CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: '12px',
-  alignItems: 'center',
-};
-
-const infoItemStyle: React.CSSProperties = {
-  whiteSpace: 'nowrap',
-};
-
-const warningBadgeStyle: React.CSSProperties = {
-  backgroundColor: '#fff3cd',
-  color: '#856404',
-  padding: '2px 10px',
-  borderRadius: '12px',
-  fontWeight: 'bold',
-  fontSize: 'clamp(10px, 1vw, 12px)',
-  whiteSpace: 'nowrap',
-};
-
-const contentStyle: React.CSSProperties = {
-  flex: 1,
-  overflow: 'auto',
-  padding: 'clamp(10px, 2vw, 20px)',
-  backgroundColor: '#f5f5f5',
-  minHeight: '200px',
-  WebkitOverflowScrolling: 'touch',
-};
-
-const innerContentStyle: React.CSSProperties = {
-  backgroundColor: 'white',
-  padding: 'clamp(15px, 3vw, 30px)',
-  borderRadius: '8px',
-  boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-  maxWidth: '1200px',
-  margin: '0 auto',
-  width: '100%',
-};
-
-const previewHeaderStyle: React.CSSProperties = {
-  textAlign: 'center',
-  padding: 'clamp(10px, 2vw, 15px)',
-  marginBottom: 'clamp(10px, 2vw, 20px)',
-  borderBottom: '2px solid #1e3a5f',
-};
-
-const previewTitleStyle: React.CSSProperties = {
-  margin: '0 0 6px 0',
-  color: '#1e3a5f',
-  fontSize: 'clamp(18px, 3vw, 22px)',
-  wordBreak: 'break-word',
-};
-
-const previewSubStyle: React.CSSProperties = {
-  margin: '4px 0',
-  color: '#555',
-  fontSize: 'clamp(12px, 1.5vw, 14px)',
-};
-
-const previewMetaStyle: React.CSSProperties = {
-  margin: '4px 0',
-  color: '#999',
-  fontSize: 'clamp(10px, 1.2vw, 12px)',
-};
-
-const previewSummaryStyle: React.CSSProperties = {
-  marginBottom: 'clamp(10px, 2vw, 20px)',
-};
-
-const previewTableWrapperStyle: React.CSSProperties = {
-  overflowX: 'auto',
-  WebkitOverflowScrolling: 'touch',
-  marginBottom: 'clamp(10px, 2vw, 20px)',
-  borderRadius: '4px',
-};
-
-const previewTableStyle: React.CSSProperties = {
-  minWidth: '100%',
-  width: '100%',
-};
-
-const previewFooterStyle: React.CSSProperties = {
-  textAlign: 'center',
-  padding: 'clamp(10px, 2vw, 15px)',
-  borderTop: '1px solid #ddd',
-  fontSize: 'clamp(10px, 1.2vw, 12px)',
-  color: '#999',
 };
 
 const controlsStyle: React.CSSProperties = {
-  padding: 'clamp(10px, 2vw, 15px)',
-  borderTop: '1px solid #ddd',
   display: 'flex',
-  justifyContent: 'space-between',
   alignItems: 'center',
+  justifyContent: 'space-between',
+  flexWrap: 'wrap',
+  gap: '12px',
+  padding: '16px 24px',
+  borderBottom: '1px solid #e9ecef',
   backgroundColor: '#f8f9fa',
   flexShrink: 0,
-  flexWrap: 'wrap',
-  gap: '8px',
 };
 
-const controlsLeftStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 'clamp(8px, 1.5vw, 15px)',
-  flexWrap: 'wrap',
+const modalTitleStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: '18px',
+  color: '#1e3a5f',
 };
 
-const controlsRightStyle: React.CSSProperties = {
+const buttonGroupStyle: React.CSSProperties = {
   display: 'flex',
   gap: '8px',
-  flexWrap: 'wrap',
 };
 
-const controlButtonStyle: React.CSSProperties = {
-  padding: 'clamp(8px, 1.5vw, 12px) clamp(16px, 2.5vw, 25px)',
-  color: 'white',
-  border: 'none',
+const buttonStyle: React.CSSProperties = {
+  padding: '8px 16px',
   borderRadius: '6px',
+  border: 'none',
+  color: 'white',
   cursor: 'pointer',
-  fontSize: 'clamp(12px, 1.5vw, 14px)',
-  fontWeight: 'bold',
-  transition: 'transform 0.2s',
-  whiteSpace: 'nowrap',
-  minWidth: 'clamp(70px, 10vw, 100px)',
+  fontSize: '14px',
+  fontWeight: '600',
 };
 
-const hintStyle: React.CSSProperties = {
-  fontSize: 'clamp(11px, 1.2vw, 13px)',
-  color: '#666',
-  textAlign: 'left',
+const closeButtonStyle: React.CSSProperties = {
+  ...buttonStyle,
+  backgroundColor: '#6c757d',
+};
+
+const previewContentStyle: React.CSSProperties = {
+  padding: '30px',
+  backgroundColor: 'white',
+  width: '100%',
+};
+
+const headerStyle: React.CSSProperties = {
+  textAlign: 'center',
+  padding: '15px',
+  marginBottom: '20px',
+  borderBottom: '2px solid #1e3a5f',
+};
+
+const headerTitleStyle: React.CSSProperties = {
+  margin: '0 0 8px 0',
+  fontSize: '20px',
+  color: '#1e3a5f',
+};
+
+const summaryStyle: React.CSSProperties = {
+  padding: '15px',
+  marginBottom: '20px',
+  border: '1px solid #ddd',
+  borderRadius: '8px',
+  background: '#f8f9fa',
 };
 
 export default DownloadPreview;

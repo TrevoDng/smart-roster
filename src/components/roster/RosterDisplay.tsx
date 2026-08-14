@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+// src/components/roster/RosterDisplay.tsx
+
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -20,6 +22,7 @@ import RosterSummary from './RosterSummary';
 import RosterHistory from './RosterHistory';
 import PrintPage from './PrintPage';
 import DownloadPreview from './DownloadPreview';
+import TableScaleControls from '../common/TableScaleControls';
 
 // Define a pending change type
 interface PendingChange {
@@ -53,6 +56,12 @@ const RosterDisplay: React.FC = () => {
   const [currentSnapshot, setCurrentSnapshot] = useState<RosterSnapshot | null>(null);
   const [selectedVersion, setSelectedVersion] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  
+  //auto table resize
+  // Add these state variables after existing states
+const [tableScale, setTableScale] = useState<number>(100);
+const [isAutoResized, setIsAutoResized] = useState<boolean>(false);
+const tableRef = useRef<HTMLDivElement>(null);
   
   // State for the edit modal
   const [showEditModal, setShowEditModal] = useState(false);
@@ -472,7 +481,39 @@ const RosterDisplay: React.FC = () => {
   }, [pendingChanges.length]);
 
 
+ // ==========================================
+// Handle auto-resize for table
+ // ==========================================
 
+// Add these functions
+const handleAutoResize = useCallback(() => {
+  if (!tableRef.current) return;
+  
+  setTimeout(() => {
+    const tableElement = tableRef.current?.querySelector('table');
+    if (!tableElement) return;
+    
+    const containerWidth = window.innerWidth - 80;
+    const tableWidth = tableElement.scrollWidth;
+    
+    if (tableWidth > containerWidth) {
+      const optimalScale = Math.floor((containerWidth / tableWidth) * 100);
+      const clampedScale = Math.max(30, Math.min(100, optimalScale));
+      setTableScale(clampedScale);
+      setIsAutoResized(true);
+    } else {
+      setTableScale(100);
+      setIsAutoResized(false);
+    }
+  }, 100);
+}, []);
+
+const handleScaleChange = useCallback((newScale: number) => {
+  setTableScale(newScale);
+  setIsAutoResized(false);
+}, []);
+
+// Add to render section - add these buttons in RosterHeader or above RosterTable
 
   // ============================================
   // HTML DOWNLOAD FUNCTION
@@ -752,7 +793,29 @@ const RosterDisplay: React.FC = () => {
               formatDate={formatDate}
               formatDateTime={formatDateTime}
             />
+            
+           {/*table scale controls*/}
+            <div style={{ marginBottom: '16px' }}>
+            
+  <TableScaleControls
+    scale={tableScale}
+    onScaleChange={handleScaleChange}
+    onAutoResize={handleAutoResize}
+    isAutoResized={isAutoResized}
+    label="Table Size:"
+    showControls={true}
+  />
+</div>
 
+<div 
+  ref={tableRef}
+  style={{
+    transform: `scale(${tableScale / 100})`,
+    transformOrigin: 'top left',
+    width: `${100 / (tableScale / 100)}%`,
+    transition: 'transform 0.3s ease',
+  }}
+>
             <RosterTable
               roster={roster}
               headers={currentData.headers}
@@ -761,6 +824,7 @@ const RosterDisplay: React.FC = () => {
               getShiftDisplay={getShiftDisplay}
               isPrintView={false}
             />
+            </div>
 
             <RosterSummary summary={currentData.summary} isPrintView={false} />
 

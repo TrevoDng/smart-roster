@@ -1,6 +1,9 @@
-import React, { useRef } from 'react';
+// src/components/roster/PrintPage.tsx
+
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import RosterTable from './RosterTable';
 import RosterSummary from './RosterSummary';
+import TableScaleControls from '../common/TableScaleControls';
 import { Roster, RosterSnapshot } from '../../types';
 
 interface PrintPageProps {
@@ -22,11 +25,69 @@ const PrintPage: React.FC<PrintPageProps> = ({
 }) => {
   const currentData = (snapshot.data as any).generatedData;
   const contentRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
+  
+  // Scale state
+  const [tableScale, setTableScale] = useState<number>(100);
+  const [isAutoResized, setIsAutoResized] = useState<boolean>(false);
+
+  // Auto-resize function for print preview
+  const handleAutoResize = useCallback(() => {
+    if (!tableRef.current) return;
+    
+    // Wait for DOM to render
+    setTimeout(() => {
+      const tableElement = tableRef.current?.querySelector('table');
+      if (!tableElement) return;
+      
+      const containerWidth = window.innerWidth - 120; // Account for padding
+      const tableWidth = tableElement.scrollWidth;
+      
+      if (tableWidth > containerWidth) {
+        const optimalScale = Math.floor((containerWidth / tableWidth) * 100);
+        const clampedScale = Math.max(30, Math.min(100, optimalScale));
+        setTableScale(clampedScale);
+        setIsAutoResized(true);
+      } else {
+        setTableScale(100);
+        setIsAutoResized(false);
+      }
+    }, 100);
+  }, []);
+
+  // Auto-resize on mount and when snapshot changes
+  useEffect(() => {
+    handleAutoResize();
+  }, [handleAutoResize, snapshot]);
+
+  // Handle manual scale change
+  const handleScaleChange = useCallback((newScale: number) => {
+    setTableScale(newScale);
+    setIsAutoResized(false);
+  }, []);
 
   // Manual print function
   const handlePrint = () => {
     window.print();
   };
+
+  // For print media - reset scale to 100% when printing
+  useEffect(() => {
+    const handleBeforePrint = () => {
+      // We want the print version to use the current scale
+      // but print styles will handle the rest
+    };
+
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', () => {
+      // Restore after print
+    });
+
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', () => {});
+    };
+  }, []);
 
   return (
     <div className="print-page-container" style={containerStyle}>
@@ -38,10 +99,28 @@ const PrintPage: React.FC<PrintPageProps> = ({
         <button onClick={handlePrint} style={printButtonStyle}>
           🖨️ Print / Save as PDF
         </button>
-        <span style={hintStyle}>💡 Tip: Use "Save as PDF" in print dialog</span>
+        
+        <TableScaleControls
+          scale={tableScale}
+          onScaleChange={handleScaleChange}
+          onAutoResize={handleAutoResize}
+          isAutoResized={isAutoResized}
+          label="Preview Size:"
+        />
+        
+        <span style={hintStyle}>💡 Use "Save as PDF" in print dialog</span>
       </div>
 
-      <div ref={contentRef} className="print-content" style={contentStyle}>
+      <div 
+        ref={contentRef} 
+        className="print-content" 
+        style={{
+          ...contentStyle,
+          transform: `scale(${tableScale / 100})`,
+          transformOrigin: 'top center',
+          width: `${100 / (tableScale / 100)}%`,
+        }}
+      >
         {/* Header - Top (Order 1) */}
         <div className="print-header" style={headerStyle}>
           <h2 style={headerTitleStyle}>{roster.name}</h2>
@@ -66,7 +145,7 @@ const PrintPage: React.FC<PrintPageProps> = ({
         </div>
 
         {/* Table - Bottom (Order 3) */}
-        <div className="print-table-container" style={tableContainerStyle}>
+        <div ref={tableRef} className="print-table-container" style={tableContainerStyle}>
           <RosterTable
             roster={roster}
             headers={currentData.headers}
@@ -81,7 +160,7 @@ const PrintPage: React.FC<PrintPageProps> = ({
   );
 };
 
-// Styles
+// Styles - same as before with minor adjustments
 const containerStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -148,6 +227,7 @@ const contentStyle: React.CSSProperties = {
   padding: '30px',
   borderRadius: '12px',
   boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+  transition: 'transform 0.3s ease',
 };
 
 const headerStyle: React.CSSProperties = {
@@ -197,7 +277,7 @@ const tableContainerStyle: React.CSSProperties = {
   padding: '5px',
 };
 
-// CSS for print
+// Print styles with auto-sizing for print
 const printStyles = `
   @media print {
     body {
@@ -212,15 +292,18 @@ const printStyles = `
     
     .print-page-container {
       background: white !important;
-      padding: 10px !important;
+      padding: 0 !important;
       min-height: 100vh !important;
     }
     
     .print-content {
+      transform: none !important;
+      width: 100% !important;
+      max-width: 100% !important;
       box-shadow: none !important;
       padding: 10px !important;
-      gap: 15px !important;
-      max-width: 100% !important;
+      gap: 10px !important;
+      border-radius: 0 !important;
     }
     
     .print-header,
@@ -233,41 +316,48 @@ const printStyles = `
     
     .print-header {
       order: 0 !important;
+      padding: 8px !important;
     }
     
     .print-summary {
       order: 1 !important;
+      padding: 10px !important;
     }
     
     .print-table-container {
       order: 2 !important;
+      overflow: visible !important;
+      padding: 0 !important;
     }
     
     @page {
-      size: ANSI-C landscape;
-      margin: 0.3in;
+      size: landscape;
+      margin: 0.2in !important;
     }
     
     table {
-      font-size: 10px !important;
-      page-break-inside: avoid !important;
+      font-size: 9px !important;
+      page-break-inside: auto !important;
     }
     
     th {
-      font-size: 9px !important;
+      font-size: 8px !important;
+      padding: 4px 6px !important;
     }
     
     td {
-      font-size: 9px !important;
+      font-size: 8px !important;
+      padding: 4px 6px !important;
     }
     
     .staff-name {
-      font-size: 9px !important;
-      min-width: 70px !important;
+      font-size: 8px !important;
+      min-width: 60px !important;
+      padding: 4px 6px !important;
     }
     
     .company-number {
-      font-size: 7px !important;
+      font-size: 6px !important;
     }
     
     thead {
