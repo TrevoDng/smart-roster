@@ -1,5 +1,3 @@
-// src/components/roster/PrintPage.tsx
-
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import RosterTable from './RosterTable';
 import RosterSummary from './RosterSummary';
@@ -27,20 +25,19 @@ const PrintPage: React.FC<PrintPageProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   
-  // Scale state
+  // Scale state - only affects table
   const [tableScale, setTableScale] = useState<number>(100);
   const [isAutoResized, setIsAutoResized] = useState<boolean>(false);
 
-  // Auto-resize function for print preview
+  // Auto-resize function - only for table
   const handleAutoResize = useCallback(() => {
     if (!tableRef.current) return;
     
-    // Wait for DOM to render
     setTimeout(() => {
       const tableElement = tableRef.current?.querySelector('table');
       if (!tableElement) return;
       
-      const containerWidth = window.innerWidth - 120; // Account for padding
+      const containerWidth = window.innerWidth - 120;
       const tableWidth = tableElement.scrollWidth;
       
       if (tableWidth > containerWidth) {
@@ -71,24 +68,6 @@ const PrintPage: React.FC<PrintPageProps> = ({
     window.print();
   };
 
-  // For print media - reset scale to 100% when printing
-  useEffect(() => {
-    const handleBeforePrint = () => {
-      // We want the print version to use the current scale
-      // but print styles will handle the rest
-    };
-
-    window.addEventListener('beforeprint', handleBeforePrint);
-    window.addEventListener('afterprint', () => {
-      // Restore after print
-    });
-
-    return () => {
-      window.removeEventListener('beforeprint', handleBeforePrint);
-      window.removeEventListener('afterprint', () => {});
-    };
-  }, []);
-
   return (
     <div className="print-page-container" style={containerStyle}>
       {/* Controls - only visible on screen, hidden in print */}
@@ -105,23 +84,14 @@ const PrintPage: React.FC<PrintPageProps> = ({
           onScaleChange={handleScaleChange}
           onAutoResize={handleAutoResize}
           isAutoResized={isAutoResized}
-          label="Preview Size:"
+          label="Table Size:"
         />
         
         <span style={hintStyle}>💡 Use "Save as PDF" in print dialog</span>
       </div>
 
-      <div 
-        ref={contentRef} 
-        className="print-content" 
-        style={{
-          ...contentStyle,
-          transform: `scale(${tableScale / 100})`,
-          transformOrigin: 'top center',
-          width: `${100 / (tableScale / 100)}%`,
-        }}
-      >
-        {/* Header - Top (Order 1) */}
+      <div ref={contentRef} className="print-content" style={contentStyle}>
+        {/* Header - NOT affected by scale */}
         <div className="print-header" style={headerStyle}>
           <h2 style={headerTitleStyle}>{roster.name}</h2>
           <p>{formatDate(roster.startDate)} - {formatDate(roster.endDate)}</p>
@@ -139,13 +109,24 @@ const PrintPage: React.FC<PrintPageProps> = ({
           </div>
         </div>
 
-        {/* Summary - Middle (Order 2) */}
+        {/* Summary - NOT affected by scale */}
         <div className="print-summary" style={summaryStyle}>
           <RosterSummary summary={currentData.summary} isPrintView={true} />
         </div>
 
-        {/* Table - Bottom (Order 3) */}
-        <div ref={tableRef} className="print-table-container" style={tableContainerStyle}>
+        {/* Table - ONLY THIS is affected by scale */}
+        <div 
+          ref={tableRef}
+          className="print-table-container" 
+          style={{
+            ...tableContainerStyle,
+            transform: `scale(${tableScale / 100})`,
+            transformOrigin: 'top left',
+            width: `${100 / (tableScale / 100)}%`,
+            transition: 'transform 0.3s ease',
+            overflow: 'visible',
+          }}
+        >
           <RosterTable
             roster={roster}
             headers={currentData.headers}
@@ -160,7 +141,7 @@ const PrintPage: React.FC<PrintPageProps> = ({
   );
 };
 
-// Styles - same as before with minor adjustments
+// Styles
 const containerStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
@@ -227,7 +208,6 @@ const contentStyle: React.CSSProperties = {
   padding: '30px',
   borderRadius: '12px',
   boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-  transition: 'transform 0.3s ease',
 };
 
 const headerStyle: React.CSSProperties = {
@@ -277,7 +257,7 @@ const tableContainerStyle: React.CSSProperties = {
   padding: '5px',
 };
 
-// Print styles with auto-sizing for print
+// Print styles
 const printStyles = `
   @media print {
     body {
