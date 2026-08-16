@@ -47,7 +47,7 @@ const Navigation: React.FC = () => {
               }}
               className="nav-link"
             >
-              <span style={linkIconStyle}>📊</span>
+              <span style={linkIconStyle}><i className="fa-solid fa-house"></i></span>
               Home
             </Link>
             <Link 
