@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/smart-roster/static/css/main.96ac91f8.css",
-    "main.js": "/smart-roster/static/js/main.76b58c0f.js",
+    "main.js": "/smart-roster/static/js/main.01f82ef7.js",
     "static/js/396.9fb625a8.chunk.js": "/smart-roster/static/js/396.9fb625a8.chunk.js",
     "static/js/453.62a44bb3.chunk.js": "/smart-roster/static/js/453.62a44bb3.chunk.js",
     "static/js/977.a7c9dac0.chunk.js": "/smart-roster/static/js/977.a7c9dac0.chunk.js",
     "static/js/455.85e43a95.chunk.js": "/smart-roster/static/js/455.85e43a95.chunk.js",
     "index.html": "/smart-roster/index.html",
     "main.96ac91f8.css.map": "/smart-roster/static/css/main.96ac91f8.css.map",
-    "main.76b58c0f.js.map": "/smart-roster/static/js/main.76b58c0f.js.map",
+    "main.01f82ef7.js.map": "/smart-roster/static/js/main.01f82ef7.js.map",
     "396.9fb625a8.chunk.js.map": "/smart-roster/static/js/396.9fb625a8.chunk.js.map",
     "453.62a44bb3.chunk.js.map": "/smart-roster/static/js/453.62a44bb3.chunk.js.map",
     "977.a7c9dac0.chunk.js.map": "/smart-roster/static/js/977.a7c9dac0.chunk.js.map",
@@ -16,6 +16,6 @@
   },
   "entrypoints": [
     "static/css/main.96ac91f8.css",
-    "static/js/main.76b58c0f.js"
+    "static/js/main.01f82ef7.js"
   ]
 }
