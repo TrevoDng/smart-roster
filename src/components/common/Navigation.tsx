@@ -40,6 +40,17 @@ const Navigation: React.FC = () => {
           {/* Desktop Navigation Links */}
           <div style={desktopNavStyle} className="desktop-nav">
             <Link 
+              to="/" 
+              style={{
+                ...navLinkStyle,
+                ...(isActive('/dashboard') ? activeNavLinkStyle : {})
+              }}
+              className="nav-link"
+            >
+              <span style={linkIconStyle}>📊</span>
+              Home
+            </Link>
+            <Link 
               to="/dashboard" 
               style={{
                 ...navLinkStyle,

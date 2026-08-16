@@ -306,7 +306,7 @@ const closeButtonStyle: React.CSSProperties = {
 };
 
 const previewContentStyle: React.CSSProperties = {
-  padding: '30px',
+  padding: '0px',
   backgroundColor: 'white',
   width: '100%',
 };

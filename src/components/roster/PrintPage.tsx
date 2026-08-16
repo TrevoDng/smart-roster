@@ -1,7 +1,6 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef } from 'react';
 import RosterTable from './RosterTable';
 import RosterSummary from './RosterSummary';
-import TableScaleControls from '../common/TableScaleControls';
 import { Roster, RosterSnapshot } from '../../types';
 
 interface PrintPageProps {
@@ -23,45 +22,6 @@ const PrintPage: React.FC<PrintPageProps> = ({
 }) => {
   const currentData = (snapshot.data as any).generatedData;
   const contentRef = useRef<HTMLDivElement>(null);
-  const tableRef = useRef<HTMLDivElement>(null);
-  
-  // Scale state - only affects table
-  const [tableScale, setTableScale] = useState<number>(100);
-  const [isAutoResized, setIsAutoResized] = useState<boolean>(false);
-
-  // Auto-resize function - only for table
-  const handleAutoResize = useCallback(() => {
-    if (!tableRef.current) return;
-    
-    setTimeout(() => {
-      const tableElement = tableRef.current?.querySelector('table');
-      if (!tableElement) return;
-      
-      const containerWidth = window.innerWidth - 120;
-      const tableWidth = tableElement.scrollWidth;
-      
-      if (tableWidth > containerWidth) {
-        const optimalScale = Math.floor((containerWidth / tableWidth) * 100);
-        const clampedScale = Math.max(30, Math.min(100, optimalScale));
-        setTableScale(clampedScale);
-        setIsAutoResized(true);
-      } else {
-        setTableScale(100);
-        setIsAutoResized(false);
-      }
-    }, 100);
-  }, []);
-
-  // Auto-resize on mount and when snapshot changes
-  useEffect(() => {
-    handleAutoResize();
-  }, [handleAutoResize, snapshot]);
-
-  // Handle manual scale change
-  const handleScaleChange = useCallback((newScale: number) => {
-    setTableScale(newScale);
-    setIsAutoResized(false);
-  }, []);
 
   // Manual print function
   const handlePrint = () => {
@@ -78,20 +38,11 @@ const PrintPage: React.FC<PrintPageProps> = ({
         <button onClick={handlePrint} style={printButtonStyle}>
           🖨️ Print / Save as PDF
         </button>
-        
-        <TableScaleControls
-          scale={tableScale}
-          onScaleChange={handleScaleChange}
-          onAutoResize={handleAutoResize}
-          isAutoResized={isAutoResized}
-          label="Table Size:"
-        />
-        
-        <span style={hintStyle}>💡 Use "Save as PDF" in print dialog</span>
+        <span style={hintStyle}>💡 Tip: Use "Save as PDF" in print dialog</span>
       </div>
 
       <div ref={contentRef} className="print-content" style={contentStyle}>
-        {/* Header - NOT affected by scale */}
+        {/* Header - Top (Order 1) */}
         <div className="print-header" style={headerStyle}>
           <h2 style={headerTitleStyle}>{roster.name}</h2>
           <p>{formatDate(roster.startDate)} - {formatDate(roster.endDate)}</p>
@@ -109,24 +60,13 @@ const PrintPage: React.FC<PrintPageProps> = ({
           </div>
         </div>
 
-        {/* Summary - NOT affected by scale */}
+        {/* Summary - Middle (Order 2) */}
         <div className="print-summary" style={summaryStyle}>
           <RosterSummary summary={currentData.summary} isPrintView={true} />
         </div>
 
-        {/* Table - ONLY THIS is affected by scale */}
-        <div 
-          ref={tableRef}
-          className="print-table-container" 
-          style={{
-            ...tableContainerStyle,
-            transform: `scale(${tableScale / 100})`,
-            transformOrigin: 'top left',
-            width: `${100 / (tableScale / 100)}%`,
-            transition: 'transform 0.3s ease',
-            overflow: 'visible',
-          }}
-        >
+        {/* Table - Bottom (Order 3) */}
+        <div className="print-table-container" style={tableContainerStyle}>
           <RosterTable
             roster={roster}
             headers={currentData.headers}
@@ -257,7 +197,7 @@ const tableContainerStyle: React.CSSProperties = {
   padding: '5px',
 };
 
-// Print styles
+// CSS for print
 const printStyles = `
   @media print {
     body {
@@ -272,18 +212,15 @@ const printStyles = `
     
     .print-page-container {
       background: white !important;
-      padding: 0 !important;
+      padding: 10px !important;
       min-height: 100vh !important;
     }
     
     .print-content {
-      transform: none !important;
-      width: 100% !important;
-      max-width: 100% !important;
       box-shadow: none !important;
       padding: 10px !important;
-      gap: 10px !important;
-      border-radius: 0 !important;
+      gap: 15px !important;
+      max-width: 100% !important;
     }
     
     .print-header,
@@ -296,48 +233,41 @@ const printStyles = `
     
     .print-header {
       order: 0 !important;
-      padding: 8px !important;
     }
     
     .print-summary {
       order: 1 !important;
-      padding: 10px !important;
     }
     
     .print-table-container {
       order: 2 !important;
-      overflow: visible !important;
-      padding: 0 !important;
     }
     
     @page {
-      size: landscape;
-      margin: 0.2in !important;
+      size: ANSI-C landscape;
+      margin: 0.3in;
     }
     
     table {
-      font-size: 9px !important;
-      page-break-inside: auto !important;
+      font-size: 10px !important;
+      page-break-inside: avoid !important;
     }
     
     th {
-      font-size: 8px !important;
-      padding: 4px 6px !important;
+      font-size: 9px !important;
     }
     
     td {
-      font-size: 8px !important;
-      padding: 4px 6px !important;
+      font-size: 9px !important;
     }
     
     .staff-name {
-      font-size: 8px !important;
-      min-width: 60px !important;
-      padding: 4px 6px !important;
+      font-size: 9px !important;
+      min-width: 70px !important;
     }
     
     .company-number {
-      font-size: 6px !important;
+      font-size: 7px !important;
     }
     
     thead {

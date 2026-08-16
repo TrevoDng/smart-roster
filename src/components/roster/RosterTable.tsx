@@ -23,7 +23,7 @@ const RosterTable: React.FC<RosterTableProps> = ({
     backgroundColor: 'white',
     borderRadius: isPrintView ? '0' : '12px',
     boxShadow: isPrintView ? 'none' : '0 2px 10px rgba(0,0,0,0.1)',
-    padding: isPrintView ? '5px' : '10px',
+    padding: isPrintView ? '5px' : '1px',
   };
 
   const tableStyle: React.CSSProperties = {
@@ -48,10 +48,11 @@ const RosterTable: React.FC<RosterTableProps> = ({
 
   const tdStyle: React.CSSProperties = {
     border: isPrintView ? '1px solid #000' : '1px solid #ddd',
-    padding: isPrintView ? '3px 5px' : '10px',
+    padding: isPrintView ? '1px 1px' : '1px',
     textAlign: 'center',
     fontWeight: 'bold',
     fontSize: isPrintView ? '8px' : '13px',
+    margin: '0px',
   };
 
   const tdNameStyle: React.CSSProperties = {
@@ -61,11 +62,11 @@ const RosterTable: React.FC<RosterTableProps> = ({
     fontWeight: 'bold',
     textAlign: 'left',
     minWidth: isPrintView ? '60px' : '120px',
-    fontSize: isPrintView ? '8px' : 'inherit',
+    fontSize: isPrintView ? '12px' : 'inherit',
   };
 
   const detailTextStyle: React.CSSProperties = {
-    fontSize: isPrintView ? '7px' : '12px',
+    fontSize: isPrintView ? '10px' : '12px',
     color: '#666',
   };
 
@@ -73,11 +74,12 @@ const RosterTable: React.FC<RosterTableProps> = ({
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: '40px',
-    minHeight: '40px',
-    padding: '5px 10px',
+    /*minWidth: '40px',
+    minHeight: '40px',*/
+    padding: '0px 0px',
+    margin: "0px",
     border: '2px solid white',
-    borderRadius: '50%',
+    /*borderRadius: '50%',*/
     fontWeight: 'bold',
     fontSize: '12px',
   };
@@ -110,8 +112,8 @@ const RosterTable: React.FC<RosterTableProps> = ({
                     color: 'white',
                   }}
                 >
-                  <div className={`circle ${shift.toLowerCase()}`}  style={{ ...circleStyle, backgroundColor: getShiftColor(shift) }}>
-                    {getShiftDisplay(shift)}
+                  <div className={`circle ${shift.toLowerCase()}`}  style={{ ...circleStyle, color: "#000", backgroundColor:  getShiftColor(shift) ? "white" : "white" }}>
+                    {getShiftDisplay(shift) === "Day" ? "D" : getShiftDisplay(shift) === "Night" ? "N" : getShiftDisplay(shift) === "Off" ? "-" : "O"}
                   </div>
                 </td>
               ))}
