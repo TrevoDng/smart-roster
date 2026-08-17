@@ -1,3 +1,5 @@
+// src/components/roster/RosterHeader.tsx
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Roster } from '../../types';
@@ -40,7 +42,12 @@ const RosterHeader: React.FC<RosterHeaderProps> = ({
   const navigate = useNavigate();
 
   const goToHelp = () => {
-    navigate('/help?section=print');
+    // Pass the roster ID in navigation state
+    navigate(`/help?section=print`, { 
+      state: { rosterId: roster.id }
+      // Keep the section param in URL if you want
+      
+    });
   };
 
   return (
@@ -124,7 +131,7 @@ const RosterHeader: React.FC<RosterHeaderProps> = ({
             >
               ⬇️ Download
             </button>
-            {/* Help Button */}
+            {/* Help Button - Updated to pass roster ID */}
             <button 
               onClick={goToHelp} 
               style={{ ...editButtonStyle, backgroundColor: '#17a2b8' }}
@@ -138,7 +145,7 @@ const RosterHeader: React.FC<RosterHeaderProps> = ({
   );
 };
 
-// Styles
+// Styles (unchanged)
 const headerStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',

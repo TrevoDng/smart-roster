@@ -23,6 +23,7 @@ import RosterHistory from './RosterHistory';
 import PrintPage from './PrintPage';
 import DownloadPreview from './DownloadPreview';
 import TableScaleControls from '../common/TableScaleControls';
+import BackButton from '../common/BackButton';
 
 // Define a pending change type
 interface PendingChange {
@@ -72,6 +73,12 @@ const tableRef = useRef<HTMLDivElement>(null);
     newValue: '',
     notes: '',
   });
+
+  const hendleHelpNavigation=()=> {
+	  if(roster) {
+      navigate('/help', { state: { rosterId: roster.id }  });
+	  }
+  }
   
   // State for pending changes
   const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
@@ -774,6 +781,15 @@ const handleScaleChange = useCallback((newScale: number) => {
       ) : (
         <>
           <Navigation />
+
+	  <div className="no-print" style={containerStyle}>
+          {/* Add Back button here */}
+          <div style={backButtonContainerStyle}>
+            <BackButton
+              label="Back to Dashboard"
+              urlTo="/dashboard"
+            />
+          </div>
           
           <div className="no-print" style={containerStyle}>
             <RosterHeader
@@ -1039,6 +1055,7 @@ const handleScaleChange = useCallback((newScale: number) => {
               </div>
             </div>
           )}
+	  </div>
         </>
       )}
     </>
@@ -1225,6 +1242,10 @@ const pendingItemNotesStyle: React.CSSProperties = {
   color: '#666',
   fontStyle: 'italic',
   marginTop: '4px',
+};
+
+const backButtonContainerStyle: React.CSSProperties = {
+  marginBottom: '20px',
 };
 
 export default RosterDisplay;

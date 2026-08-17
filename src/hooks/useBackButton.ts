@@ -44,7 +44,7 @@ export const useBackButton = (): BackButtonState => {
     if (savedUrl && !previousUrl) {
       setPreviousUrl(savedUrl);
     }
-  }, []);
+  }, [previousUrl]);
 
   return {
     previousUrl,

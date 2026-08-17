@@ -1,20 +1,25 @@
+// src/components/roster/help/HelpPage.tsx
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useBackButton } from '../../../hooks/useBackButton';
 import BackButton from '../../common/BackButton';
 import { helpContents, helpButtonIds, HelpContent } from './helpData';
 
 const HelpPage: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { saveUrl } = useBackButton();
   const [activeButton, setActiveButton] = useState<string>('print');
   const [activeContent, setActiveContent] = useState<HelpContent>(helpContents.print);
 
-  // Save the current URL when component mounts
+  // Get roster ID from navigation state
+  const rosterId = (location.state as any)?.rosterId || '';
+
+  // If no rosterId, redirect to dashboard
   useEffect(() => {
-    saveUrl();
-  }, [saveUrl]);
+    if (!rosterId) {
+      navigate('/dashboard');
+    }
+  }, [rosterId, navigate]);
 
   // Get the active button from URL query params
   useEffect(() => {
@@ -40,8 +45,10 @@ const HelpPage: React.FC = () => {
       {/* Header */}
       <div style={headerStyle}>
         <div style={headerLeftStyle}>
-          <BackButton label="Back to Roster" 
-	     urlTo={'/roster/:id'}  />
+          <BackButton 
+            label="Back to Roster" 
+            urlTo={`/roster/${rosterId}`}  // Uses actual roster ID
+          />
         </div>
         <h1 style={titleStyle}>📖 How to Use the System</h1>
         <div style={headerRightStyle}></div>
