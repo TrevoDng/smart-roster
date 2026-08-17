@@ -1,21 +1,26 @@
 import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useBackButton } from '../../hooks/useBackButton';
 
 interface BackButtonProps {
   className?: string;
   style?: React.CSSProperties;
   label?: string;
+  urlTo?: string;
 }
 
 const BackButton: React.FC<BackButtonProps> = ({
   className = '',
   style = {},
   label = '← Back',
+  urlTo = '/',
 }) => {
   const { goBack, canGoBack } = useBackButton();
+  const navigate = useNavigate();
 
   const handleClick = () => {
-    goBack();
+   //  goBack();
+     navigate(urlTo);;
   };
 
   return (

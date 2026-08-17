@@ -40,7 +40,8 @@ const HelpPage: React.FC = () => {
       {/* Header */}
       <div style={headerStyle}>
         <div style={headerLeftStyle}>
-          <BackButton label="Back to Roster" />
+          <BackButton label="Back to Roster" 
+	     urlTo={'/roster/:id'}  />
         </div>
         <h1 style={titleStyle}>📖 How to Use the System</h1>
         <div style={headerRightStyle}></div>
