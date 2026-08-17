@@ -788,6 +788,9 @@ const handleScaleChange = useCallback((newScale: number) => {
             <BackButton
               label="Back to Dashboard"
               urlTo="/dashboard"
+              variant="secondary"
+              size="md"
+              icon="←"
             />
           </div>
           

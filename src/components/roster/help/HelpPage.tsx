@@ -47,7 +47,10 @@ const HelpPage: React.FC = () => {
         <div style={headerLeftStyle}>
           <BackButton 
             label="Back to Roster" 
-            urlTo={`/roster/${rosterId}`}  // Uses actual roster ID
+            urlTo={`/roster/${rosterId}`}  
+            variant="primary"
+            size="md"
+            icon="←"
           />
         </div>
         <h1 style={titleStyle}>📖 How to Use the System</h1>

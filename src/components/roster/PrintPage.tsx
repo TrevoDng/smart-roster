@@ -240,7 +240,7 @@ const printStyles = `
     }
     
     .print-table-container {
-      order: 2 !important;
+      order: 1 !important;
     }
     
     @page {
