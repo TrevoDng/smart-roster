@@ -236,7 +236,7 @@ const printStyles = `
     }
     
     .print-summary {
-      order: 1 !important;
+      order: 2 !important;
     }
     
     .print-table-container {

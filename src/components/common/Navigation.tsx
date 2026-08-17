@@ -43,7 +43,7 @@ const Navigation: React.FC = () => {
               to="/" 
               style={{
                 ...navLinkStyle,
-                ...(isActive('/dashboard') ? activeNavLinkStyle : {})
+                ...(isActive('/') ? activeNavLinkStyle : {})
               }}
               className="nav-link"
             >
