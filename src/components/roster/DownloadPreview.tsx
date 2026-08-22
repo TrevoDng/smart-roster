@@ -261,7 +261,7 @@ const modalContentStyle: React.CSSProperties = {
   borderRadius: '12px',
   maxWidth: '95vw',
   width: '100%',
-  maxHeight: '95vh',
+  minHeight: '95vh',
   overflow: 'hidden',
   display: 'flex',
   flexDirection: 'column',
